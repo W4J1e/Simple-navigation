@@ -1,0 +1,65 @@
+/* 基本样式 */
+:root {
+    --primary-color: #3b82f6;
+    --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    background-color: #1e293b;
+    background-image: url('https://api.xinyew.cn/api/bing') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-attachment: fixed !important;
+    color: white;
+}
+
+/* 背景加载失败时的回退样式 */
+@media not all and (min-resolution:.001dpcm) { 
+    @supports (-webkit-appearance:none) {
+        body {
+            background-image: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+        }
+    }
+}
+
+/* 链接卡片样式 */
+.link-card {
+    transition: all 0.3s ease;
+}
+
+.link-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow);
+}
+
+.link-card:hover .link-icon-container {
+    background-color: rgba(59, 130, 246, 0.3);
+}
+
+/* 分类标签样式 */
+.category-tab {
+    transition: all 0.2s ease;
+}
+
+/* 搜索框样式 */
+#search-input {
+    transition: all 0.3s ease;
+}
+
+#search-input:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* 响应式布局 */
+@media (max-width: 640px) {
+    #links-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    #category-tabs {
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}

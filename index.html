@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自定义导航页</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdn2.hin.cool/fwp/css/all.min.css"/>
+</head>
+<body class="font-inter min-h-screen flex flex-col bg-cover bg-center bg-no-repeat transition-all duration-700" id="app-body">
+    <!-- 顶部导航栏 -->
+    <header class="bg-dark/60 text-white bg-blur w-full py-4 px-6 md:px-12 flex justify-between items-center transition-all duration-300 z-50">
+        <div class="flex items-center">
+            <h1 class="text-2xl md:text-3xl font-bold tracking-tight">
+                <span class="text-primary">简单导航</span>
+            </h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <button id="theme-toggle" class="p-2 rounded-full hover:bg-white/10 transition-all">
+                <i class="fa fa-moon-o"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow p-6 md:p-12 flex flex-col items-center justify-center">
+        <!-- 搜索框 -->
+        <div class="w-full max-w-2xl mb-12">
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                    <button id="search-engine-toggle" class="text-white/60 hover:text-white transition-all p-1">
+                        <i class="fa fa-bing text-xl" id="search-engine-icon"></i>
+                    </button>
+                    <span id="current-search-engine" class="text-white/80 text-sm hidden sm:inline">必应</span>
+                </div>
+                <input type="text" placeholder="搜索..." id="search-input" class="w-full py-4 px-16 pr-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all">
+                <button id="search-btn" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white transition-all">
+                    <i class="fas fa-search text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 导航链接 -->
+        <div class="w-full max-w-5xl">
+            <!-- 分类标签 -->
+            <div class="flex overflow-x-auto pb-4 mb-6 gap-2 scrollbar-hide" id="category-tabs">
+                <button class="category-tab bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full whitespace-nowrap transition-all" data-category="all">
+                    全部
+                </button>
+                <button class="category-tab bg-primary text-white px-4 py-2 rounded-full whitespace-nowrap transition-all" data-category="常用">
+                    常用
+                </button>
+                <button class="category-tab bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full whitespace-nowrap transition-all" data-category="开发">
+                    开发
+                </button>
+                <button class="category-tab bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full whitespace-nowrap transition-all" data-category="设计">
+                    设计
+                </button>
+                <button class="category-tab bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full whitespace-nowrap transition-all" data-category="工具">
+                    工具
+                </button>
+                <button class="category-tab bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full whitespace-nowrap transition-all" data-category="娱乐">
+                    娱乐
+                </button>
+            </div>
+
+            <!-- 链接网格 -->
+            <div id="links-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+                <!-- 链接卡片将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark/60 text-white/70 py-4 px-6 md:px-12 bg-blur">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-4 md:mb-0">
+                <p class="text-sm">© 2025 <a href="https://hin.cool" target="_blank">Designed by W4j1e</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
