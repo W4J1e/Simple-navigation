@@ -29,7 +29,12 @@ export async function GET(request: NextRequest) {
     // 尝试获取认证状态
     let authInfo = null;
     try {
-      const authResponse = await fetch(`${request.nextUrl.origin}/api/auth/status`, {
+      // 使用原始请求的主机名构建正确的URL
+      const host = request.headers.get('host') || 'a.hin.cool';
+      const protocol = host.includes('localhost') ? 'http' : 'https';
+      const authUrl = `${protocol}://${host}/api/auth/status`;
+      
+      const authResponse = await fetch(authUrl, {
         headers: {
           cookie: request.headers.get('cookie') || '',
         },

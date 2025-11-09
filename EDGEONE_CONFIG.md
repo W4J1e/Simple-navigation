@@ -20,11 +20,12 @@
 5. **JWT_SECRET**
    - 用于JWT签名的密钥，建议使用长随机字符串
 
-## 可选的环境变量
+## 重要：必须设置的环境变量
 
-1. **NEXTAUTH_URL**
+6. **NEXTAUTH_URL**
    - 设置为：`https://a.hin.cool`
-   - 如果未设置AZURE_REDIRECT_URI，系统将使用此值构建回调URL
+   - **重要**：在EdgeOne Pages环境中，必须显式设置此变量，否则可能导致URL解析错误
+   - 这个变量用于确保所有内部API调用使用正确的域名
 
 ## 设置步骤
 
@@ -50,15 +51,17 @@
 
 ## 调试工具
 
-我们添加了一个调试API端点，帮助您诊断问题：
+我们添加了多个调试API端点，帮助您诊断问题：
 
-1. 访问 `https://a.hin.cool/api/debug` 查看环境变量和认证状态
-2. 检查返回的JSON信息，特别关注：
+1. 访问 `https://a.hin.cool/api/simple-debug` 查看Cookie和JWT状态
+2. 访问 `https://a.hin.cool/api/edgeone-debug` 查看EdgeOne Pages域名配置
+3. 检查返回的JSON信息，特别关注：
    - `environment.azureRedirectUri` 是否正确设置为 `https://a.hin.cool/api/auth/callback`
-   - `environment.hasAzureClientId`、`environment.hasAzureClientSecret` 等是否为 `true`
-   - `authentication.authenticated` 是否为 `true`
+   - `environment.NEXTAUTH_URL` 是否设置为 `https://a.hin.cool`
+   - `authentication.isAuthenticated` 是否为 `true`
+   - `detectedDomain` 是否为 `a.hin.cool`
 
-3. 如果调试信息显示环境变量未正确设置，请在EdgeOne Pages控制台中重新配置
+4. 如果调试信息显示域名不正确，请确保设置了 `NEXTAUTH_URL=https://a.hin.cool` 环境变量
 
 ## 常见问题
 
