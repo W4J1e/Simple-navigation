@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAccessToken, createJWTToken, setAuthCookie } from '@/lib/auth';
 import { OneDriveService } from '@/lib/onedrive';
 
+export const dynamic = 'force-dynamic'; 
+export const runtime = 'nodejs'; 
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;

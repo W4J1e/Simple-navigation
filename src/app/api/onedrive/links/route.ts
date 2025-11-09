@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest, refreshAccessToken } from '@/lib/auth';
 import { OneDriveService } from '@/lib/onedrive';
 
+export const dynamic = 'force-dynamic'; 
+export const runtime = 'nodejs'; 
+
 // 获取链接
 export async function GET(request: NextRequest) {
   try {
