@@ -11,12 +11,14 @@ export async function GET(request: NextRequest) {
     
     // 检查JWT令牌
     let tokenInfo = null;
+    let hasTokenError = false;
     if (authToken) {
       try {
         const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_change_in_production';
         tokenInfo = jwt.verify(authToken, jwtSecret);
       } catch (error) {
-        tokenInfo = { error: 'JWT验证失败' };
+        tokenInfo = null;
+        hasTokenError = true;
       }
     }
     
@@ -46,7 +48,8 @@ export async function GET(request: NextRequest) {
       authentication: {
         hasToken: !!authToken,
         tokenInfo: tokenInfo,
-        isAuthenticated: !!tokenInfo && !tokenInfo.error,
+        hasTokenError: hasTokenError,
+        isAuthenticated: !!tokenInfo && !hasTokenError,
       },
     });
   } catch (error) {
