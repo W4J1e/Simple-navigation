@@ -5,23 +5,39 @@ import { OneDriveService } from '@/lib/onedrive';
 export const dynamic = 'force-dynamic'; 
 export const runtime = 'nodejs'; 
 
+// 直接从环境变量获取基础URL
+function getBaseUrl(): string {
+  // 优先使用 AZURE_REDIRECT_URI 来推导基础URL
+  if (process.env.AZURE_REDIRECT_URI) {
+    return process.env.AZURE_REDIRECT_URI.replace('/api/auth/callback', '');
+  }
+  
+  // 备选使用 NEXTAUTH_URL
+  if (process.env.NEXTAUTH_URL) {
+    return process.env.NEXTAUTH_URL;
+  }
+  
+  // 开发环境默认
+  return 'http://localhost:3000';
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get('code');
     const error = searchParams.get('error');
     
+    // 获取基础URL - 在生产环境中这将是 https://a.hin.cool
+    const baseUrl = getBaseUrl();
+    console.log('回调处理 - 基础URL:', baseUrl);
+    
     if (error) {
       console.error('OAuth错误:', error);
-      return NextResponse.redirect(
-        new URL('/?error=auth_failed', request.url)
-      );
+      return NextResponse.redirect(`${baseUrl}/?error=auth_failed`);
     }
     
     if (!code) {
-      return NextResponse.redirect(
-        new URL('/?error=no_code', request.url)
-      );
+      return NextResponse.redirect(`${baseUrl}/?error=no_code`);
     }
     
     // 获取访问令牌
@@ -49,10 +65,8 @@ export async function GET(request: NextRequest) {
       refreshToken
     });
     
-    // 创建响应并设置Cookie
-    const response = NextResponse.redirect(
-      new URL('/?auth=success', request.url)
-    );
+    // 修复：使用从环境变量获取的基础URL进行重定向
+    const response = NextResponse.redirect(`${baseUrl}/?auth=success`);
     
     setAuthCookie(response, token);
     
@@ -109,8 +123,7 @@ export async function GET(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('OAuth回调错误:', error);
-    return NextResponse.redirect(
-      new URL('/?error=auth_callback_failed', request.url)
-    );
+    const baseUrl = getBaseUrl();
+    return NextResponse.redirect(`${baseUrl}/?error=auth_callback_failed`);
   }
 }
