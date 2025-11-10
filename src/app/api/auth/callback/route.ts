@@ -35,9 +35,13 @@ function getBaseUrl(request?: NextRequest): string {
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('OAuth回调：开始处理认证回调');
+    
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get('code');
     const error = searchParams.get('error');
+    
+    console.log('OAuth回调：URL参数 - code:', code ? '存在' : '不存在', 'error:', error || '无');
     
     if (error) {
       console.error('OAuth错误:', error);
@@ -47,13 +51,16 @@ export async function GET(request: NextRequest) {
     }
     
     if (!code) {
+      console.log('OAuth回调：没有找到code参数');
       return NextResponse.redirect(
         new URL('/?error=no_code', getBaseUrl(request))
       );
     }
     
+    console.log('OAuth回调：开始获取访问令牌');
     // 获取访问令牌
     const { accessToken, refreshToken } = await getAccessToken(code);
+    console.log('OAuth回调：获取访问令牌成功，accessToken长度:', accessToken.length, 'refreshToken长度:', refreshToken.length);
     
     // 获取用户信息
     const userResponse = await fetch('https://graph.microsoft.com/v1.0/me', {

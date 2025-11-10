@@ -17,8 +17,10 @@ export class OneDriveStorage {
 
   // 设置用户令牌
   setUserToken(accessToken: string, refreshToken: string): void {
+    console.log('OneDriveStorage：设置用户令牌，accessToken长度:', accessToken?.length, 'refreshToken长度:', refreshToken?.length);
     this.userToken = accessToken;
     this.refreshToken = refreshToken;
+    console.log('OneDriveStorage：令牌设置完成，isLoggedIn():', this.isLoggedIn());
   }
 
   // 清除用户令牌
@@ -55,7 +57,9 @@ export class OneDriveStorage {
 
   // 检查是否已登录
   isLoggedIn(): boolean {
-    return !!this.userToken;
+    const isLoggedIn = !!this.userToken;
+    console.log('OneDriveStorage：检查登录状态，userToken存在:', !!this.userToken, '结果:', isLoggedIn);
+    return isLoggedIn;
   }
 
   // 获取设置

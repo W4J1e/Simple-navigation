@@ -105,30 +105,47 @@ export default function HomePage() {
   // 初始化数据
   useEffect(() => {
     const initializeData = async () => {
+      console.log('页面初始化：开始检查认证状态');
+      
       // 检查URL参数中的认证状态
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('auth') === 'success') {
+      const authParam = urlParams.get('auth');
+      console.log('页面初始化：URL参数auth=', authParam);
+      
+      if (authParam === 'success') {
+        console.log('页面初始化：检测到认证成功参数，开始验证认证状态');
+        
         // 尝试从cookie获取认证信息并设置到oneDriveStorage
         try {
           const response = await fetch('/api/auth/status', {
             credentials: 'include'
           });
+          console.log('页面初始化：认证状态API响应状态:', response.status);
+          
           if (response.ok) {
             const data = await response.json();
+            console.log('页面初始化：认证状态API返回数据:', data);
+            
             if (data.authenticated) {
+              console.log('页面初始化：认证成功，设置令牌和存储状态');
               oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
               // 自动启用OneDrive存储
               setUseOneDriveStorage(true);
-              console.log('认证成功，已设置OneDrive存储');
+              console.log('页面初始化：认证成功，已设置OneDrive存储');
+            } else {
+              console.log('页面初始化：认证状态API返回未认证');
             }
+          } else {
+            console.log('页面初始化：认证状态API请求失败:', response.status);
           }
         } catch (error) {
-          console.error('检查认证状态失败:', error);
+          console.error('页面初始化：检查认证状态失败:', error);
         }
         
         // 移除URL参数避免重复触发
         const newUrl = window.location.pathname;
         window.history.replaceState({}, '', newUrl);
+        console.log('页面初始化：已移除URL参数');
       }
       
       let loadedLinks = getLinks();

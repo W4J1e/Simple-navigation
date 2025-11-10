@@ -26,36 +26,60 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
 
   useEffect(() => {
     const checkAuthStatus = async () => {
+      console.log('设置面板：开始检查认证状态');
+      
       // 检查当前存储设置
-      setUseOneDrive(useOneDriveStorage());
+      const currentStorageSetting = useOneDriveStorage();
+      setUseOneDrive(currentStorageSetting);
+      console.log('设置面板：当前存储设置:', currentStorageSetting);
       
       // 检查URL参数中的认证状态
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('auth') === 'success') {
+      const authParam = urlParams.get('auth');
+      console.log('设置面板：URL参数auth=', authParam);
+      
+      if (authParam === 'success') {
+        console.log('设置面板：检测到认证成功参数，开始验证认证状态');
+        
         // 从服务器重新检查认证状态
         try {
           const response = await fetch('/api/auth/status', {
             credentials: 'include'
           });
+          console.log('设置面板：认证状态API响应状态:', response.status);
+          
           if (response.ok) {
             const data = await response.json();
+            console.log('设置面板：认证状态API返回数据:', data);
+            
             if (data.authenticated) {
+              console.log('设置面板：认证成功，设置令牌和存储状态');
               oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
               setIsAuthenticated(true);
               setUseOneDriveStorage(true);
               console.log('设置面板：认证成功，已设置OneDrive存储');
+            } else {
+              console.log('设置面板：认证状态API返回未认证');
+              setIsAuthenticated(false);
             }
+          } else {
+            console.log('设置面板：认证状态API请求失败:', response.status);
+            setIsAuthenticated(false);
           }
         } catch (error) {
           console.error('设置面板：检查认证状态失败:', error);
+          setIsAuthenticated(false);
         }
         
         // 移除URL参数避免重复触发
         const newUrl = window.location.pathname;
         window.history.replaceState({}, '', newUrl);
+        console.log('设置面板：已移除URL参数');
       } else {
         // 检查OneDrive认证状态
-        setIsAuthenticated(oneDriveStorage.isLoggedIn());
+        const isLoggedIn = oneDriveStorage.isLoggedIn();
+        console.log('设置面板：oneDriveStorage.isLoggedIn() =', isLoggedIn);
+        setIsAuthenticated(isLoggedIn);
       }
       
       // 加载当前设置

@@ -162,13 +162,32 @@ export async function getUserFromRequest(req: NextRequest): Promise<any> {
 
 // 设置认证Cookie
 export function setAuthCookie(res: NextResponse, token: string): void {
-  res.cookies.set('auth_token', token, {
+  console.log('setAuthCookie：开始设置认证Cookie');
+  console.log('setAuthCookie：token长度:', token.length);
+  console.log('setAuthCookie：NODE_ENV:', process.env.NODE_ENV);
+  console.log('setAuthCookie：secure设置:', process.env.NODE_ENV === 'production');
+  
+  const cookieOptions: any = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7天
     path: '/'
-  });
+  };
+  
+  // 在生产环境中，可能需要设置domain
+  if (process.env.NODE_ENV === 'production' && process.env.NEXTAUTH_URL) {
+    try {
+      const url = new URL(process.env.NEXTAUTH_URL);
+      cookieOptions.domain = url.hostname;
+      console.log('setAuthCookie：设置domain为:', url.hostname);
+    } catch (error) {
+      console.error('setAuthCookie：解析NEXTAUTH_URL失败:', error);
+    }
+  }
+  
+  res.cookies.set('auth_token', token, cookieOptions);
+  console.log('setAuthCookie：Cookie设置完成');
 }
 
 // 清除认证Cookie

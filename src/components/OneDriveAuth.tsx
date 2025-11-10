@@ -42,32 +42,41 @@ export default function OneDriveAuth({ onAuthChange }: OneDriveAuthProps) {
   const checkAuthStatus = async () => {
     try {
       setIsLoading(true);
+      console.log('OneDriveAuth：开始检查认证状态');
       
       // 检查本地存储的认证状态
       const response = await fetch('/api/auth/status', {
         credentials: 'include'
       });
+      console.log('OneDriveAuth：认证状态API响应状态:', response.status);
       
       if (response.ok) {
         const data = await response.json();
+        console.log('OneDriveAuth：认证状态API返回数据:', data);
+        
         if (data.authenticated) {
+          console.log('OneDriveAuth：认证成功，设置令牌');
           oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
           onAuthChange(true);
           setIsAuthenticated(true);
+          console.log('OneDriveAuth：认证状态已更新为已登录');
         } else {
+          console.log('OneDriveAuth：认证状态API返回未认证');
           onAuthChange(false);
           setIsAuthenticated(false);
         }
       } else {
+        console.log('OneDriveAuth：认证状态API请求失败:', response.status);
         onAuthChange(false);
         setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error('检查认证状态失败:', error);
+      console.error('OneDriveAuth：检查认证状态失败:', error);
       onAuthChange(false);
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
+      console.log('OneDriveAuth：认证状态检查完成');
     }
   };
 
