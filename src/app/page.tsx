@@ -10,19 +10,66 @@ import Footer from '@/components/Footer';
 import UnifiedSettings from '@/components/UnifiedSettings';
 import AboutDialog from '@/components/AboutDialog';
 import { Link, Settings } from '@/types';
-import { getLinks, saveLinks, getSettings, saveSettings, useOneDriveStorage, setUseOneDriveStorage, syncFromOneDrive } from '@/lib/storage';
+import { getLinks, saveLinks, getSettings, saveSettings, useOneDriveStorage, setUseOneDriveStorage, syncFromOneDrive, defaultSettings } from '@/lib/storage';
 import { oneDriveStorage } from '@/lib/onedrive-storage';
 import { getGradientBackground, getBingImage } from '@/lib/utils';
 
 export default function HomePage() {
   const [links, setLinks] = useState<Link[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   const [isLinkFormOpen, setIsLinkFormOpen] = useState(false);
   const [editingLink, setEditingLink] = useState<Link | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isUnifiedSettingsOpen, setIsUnifiedSettingsOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  
+  // 页面加载时立即检查认证状态
+  useEffect(() => {
+    const checkInitialAuthStatus = async () => {
+      console.log('主页面：开始检查初始认证状态');
+      
+      try {
+        const response = await fetch('/api/auth/status', {
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('主页面：认证状态检查结果:', data);
+          
+          if (data.authenticated && data.accessToken && data.refreshToken) {
+            console.log('主页面：认证成功，设置OneDrive令牌');
+            oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
+            setIsAuthenticated(true);
+            
+            // 如果启用了OneDrive存储，尝试同步数据
+            if (useOneDriveStorage()) {
+              console.log('主页面：检测到已启用OneDrive存储，尝试同步数据');
+              await syncFromOneDrive();
+              // 重新加载数据
+              setLinks(getLinks());
+              setSettings(getSettings());
+            }
+          }
+        }
+      } catch (error) {
+        console.error('主页面：认证状态检查失败:', error);
+      }
+    };
+    
+    // 立即执行认证检查
+    checkInitialAuthStatus();
+    
+    // 设置定期检查（每60秒）
+    const intervalId = setInterval(checkInitialAuthStatus, 60000);
+    
+    return () => clearInterval(intervalId);
+  }, []);
 
   // 应用背景设置
   const applyBackground = async (settings: Settings) => {

@@ -24,9 +24,52 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
 
+  // 组件挂载时立即检查认证状态，确保页面刷新后能恢复登录状态
   useEffect(() => {
+    const initialCheckAuthStatus = async () => {
+      console.log('设置面板：组件挂载时检查认证状态');
+      
+      // 直接从服务器获取认证状态，而不只是检查本地OneDriveStorage
+      try {
+        const response = await fetch('/api/auth/status', {
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+          }
+        });
+        console.log('设置面板：初始认证检查API响应状态:', response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('设置面板：初始认证检查返回数据:', data);
+          
+          if (data.authenticated && data.accessToken && data.refreshToken) {
+            console.log('设置面板：初始认证成功，设置令牌');
+            oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
+            setIsAuthenticated(true);
+            console.log('设置面板：初始认证完成，用户已登录');
+          }
+        }
+      } catch (error) {
+        console.error('设置面板：初始认证检查失败:', error);
+      }
+    };
+    
+    // 立即执行初始认证检查
+    initialCheckAuthStatus();
+    
+    // 设置定期检查（每30秒），确保认证状态持续有效
+    const intervalId = setInterval(initialCheckAuthStatus, 30000);
+    
+    return () => clearInterval(intervalId);
+  }, []); // 空依赖数组，只在组件挂载时运行
+  
+  // 设置面板打开时的认证检查
+  useEffect(() => {
+    if (!isOpen) return;
+    
     const checkAuthStatus = async () => {
-      console.log('设置面板：开始检查认证状态');
+      console.log('设置面板：面板打开时检查认证状态');
       
       // 检查当前存储设置
       const currentStorageSetting = useOneDriveStorage();
@@ -52,7 +95,7 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
             const data = await response.json();
             console.log('设置面板：认证状态API返回数据:', data);
             
-            if (data.authenticated) {
+            if (data.authenticated && data.accessToken && data.refreshToken) {
               console.log('设置面板：认证成功，设置令牌和存储状态');
               oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
               setIsAuthenticated(true);
@@ -76,7 +119,7 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
         window.history.replaceState({}, '', newUrl);
         console.log('设置面板：已移除URL参数');
       } else {
-        // 检查OneDrive认证状态
+        // 更新认证状态
         const isLoggedIn = oneDriveStorage.isLoggedIn();
         console.log('设置面板：oneDriveStorage.isLoggedIn() =', isLoggedIn);
         setIsAuthenticated(isLoggedIn);
@@ -90,7 +133,7 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
     };
     
     checkAuthStatus();
-  }, [isOpen]); // 添加isOpen依赖，确保每次打开时都重新检查状态
+  }, [isOpen]); // 只有当设置面板打开时才运行
 
   const handleToggleStorage = async () => {
     const newUseOneDrive = !useOneDrive;
