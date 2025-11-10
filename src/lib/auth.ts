@@ -146,16 +146,34 @@ export function verifyJWTToken(token: string): any {
 
 // 从请求中获取用户信息
 export async function getUserFromRequest(req: NextRequest): Promise<any> {
+  console.log('getUserFromRequest：开始检查用户认证');
+  console.log('getUserFromRequest：请求URL:', req.url);
+  
+  // 检查所有cookies
+  const allCookies = req.cookies.getAll();
+  console.log('getUserFromRequest：所有cookies:', allCookies.map(c => ({ name: c.name, value: c.value ? '存在' : '不存在' })));
+  
   const token = req.cookies.get('auth_token')?.value;
+  console.log('getUserFromRequest：获取到的cookie token:', token ? `存在，长度: ${token.length}` : '不存在');
   
   if (!token) {
+    console.log('getUserFromRequest：没有找到认证token，返回null');
     return null;
   }
   
   try {
+    console.log('getUserFromRequest：开始验证JWT令牌');
     const payload = verifyJWTToken(token);
+    console.log('getUserFromRequest：JWT验证成功，payload:', {
+      id: payload.id,
+      displayName: payload.displayName,
+      email: payload.email,
+      accessTokenLength: payload.accessToken?.length,
+      refreshTokenLength: payload.refreshToken?.length
+    });
     return payload;
   } catch (error) {
+    console.error('getUserFromRequest：JWT验证失败:', error);
     return null;
   }
 }
