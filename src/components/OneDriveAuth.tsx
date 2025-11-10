@@ -57,7 +57,7 @@ export default function OneDriveAuth({ onAuthChange }: OneDriveAuthProps) {
           checkAuthStatus();
         }
       } catch (error) {
-        console.error('额外认证检查失败:', error);
+        // 静默处理错误
       }
     };
     
@@ -67,7 +67,6 @@ export default function OneDriveAuth({ onAuthChange }: OneDriveAuthProps) {
   const checkAuthStatus = async () => {
     try {
       setIsLoading(true);
-      console.log('OneDriveAuth：开始检查认证状态');
       
       // 检查本地存储的认证状态，添加超时控制
       const controller = new AbortController();
@@ -83,41 +82,32 @@ export default function OneDriveAuth({ onAuthChange }: OneDriveAuthProps) {
       });
       
       clearTimeout(timeoutId);
-      console.log('OneDriveAuth：认证状态API响应状态:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('OneDriveAuth：认证状态API返回数据:', data);
         
         if (data.authenticated && data.accessToken && data.refreshToken) {
-          console.log('OneDriveAuth：认证成功，设置令牌');
           // 确保令牌有效
           if (data.accessToken.length > 0 && data.refreshToken.length > 0) {
             oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
             onAuthChange(true);
             setIsAuthenticated(true);
-            console.log('OneDriveAuth：认证状态已更新为已登录');
           } else {
-            console.warn('OneDriveAuth：令牌无效，长度不足');
             onAuthChange(false);
             setIsAuthenticated(false);
           }
         } else {
-          console.log('OneDriveAuth：认证状态API返回未认证');
           onAuthChange(false);
           setIsAuthenticated(false);
         }
       } else {
-        console.log('OneDriveAuth：认证状态API请求失败:', response.status);
         onAuthChange(false);
         setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error('OneDriveAuth：检查认证状态失败:', error);
       // 如果是网络错误，设置一个短时间后重试
       setTimeout(() => {
         if (!isAuthenticated) {
-          console.log('OneDriveAuth：网络错误后重试检查认证状态');
           checkAuthStatus();
         }
       }, 2000); // 2秒后重试
@@ -125,7 +115,6 @@ export default function OneDriveAuth({ onAuthChange }: OneDriveAuthProps) {
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
-      console.log('OneDriveAuth：认证状态检查完成');
     }
   };
 
@@ -142,7 +131,7 @@ export default function OneDriveAuth({ onAuthChange }: OneDriveAuthProps) {
       oneDriveStorage.clearUserToken();
       onAuthChange(false);
     } catch (error) {
-      console.error('登出失败:', error);
+      // 静默处理错误
     }
   };
 

@@ -160,6 +160,57 @@ export async function getUserFromRequest(req: NextRequest): Promise<any> {
   }
 }
 
+// 获取认证Cookie
+export const getAuthCookie = (req?: Request) => {
+  if (req) {
+    const token = req.cookies.get('auth_token')?.value;
+    return token;
+  }
+  
+  if (typeof window !== 'undefined') {
+    const token = cookie.get('auth_token');
+    return token;
+  }
+  
+  return null;
+}
+
+// 验证JWT令牌
+export const validateToken = async (token: string) => {
+  try {
+    // 由于我们使用的是Microsoft OAuth，我们可以调用Microsoft的验证端点
+    // 但为了简单起见，我们可以检查令牌是否存在且有效
+    if (!token) {
+      return false;
+    }
+    
+    // 检查令牌格式是否正确（JWT格式）
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3) {
+      return false;
+    }
+    
+    // 尝试解码令牌（不验证签名，仅检查结构）
+    try {
+      const decoded = jwt.decode(token) as { exp?: number };
+      
+      // 检查令牌是否已过期
+      if (decoded?.exp) {
+        const now = Math.floor(Date.now() / 1000);
+        if (decoded.exp < now) {
+          return false;
+        }
+      }
+    } catch (decodeError) {
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 // 设置认证Cookie
 export function setAuthCookie(res: NextResponse, token: string, request?: NextRequest): void {
   const cookieOptions: any = {
@@ -182,12 +233,6 @@ export function setAuthCookie(res: NextResponse, token: string, request?: NextRe
     
     // 重要：在EdgeOne Pages环境中，不要设置explicit的domain属性
     // 这是解决刷新后Cookie丢失问题的关键
-    
-    // 对于调试目的，我们可以记录一下请求信息，但不强制设置domain
-    if (request) {
-      const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
-      console.log('设置认证Cookie，主机名:', host);
-    }
   }
   
   // 在开发环境中，保持原有行为
@@ -203,7 +248,6 @@ export function setAuthCookie(res: NextResponse, token: string, request?: NextRe
   
   // 设置Cookie
   res.cookies.set('auth_token', token, cookieOptions);
-  console.log('认证Cookie已设置，secure:', cookieOptions.secure, 'sameSite:', cookieOptions.sameSite);
 }
 
 // 清除认证Cookie
@@ -224,5 +268,4 @@ export function clearAuthCookie(res: NextResponse): void {
   }
   
   res.cookies.set('auth_token', '', cookieOptions);
-  console.log('认证Cookie已清除');
 }

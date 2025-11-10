@@ -28,8 +28,6 @@ export default function HomePage() {
   // 页面加载时立即检查认证状态
   useEffect(() => {
     const checkInitialAuthStatus = async () => {
-      console.log('主页面：开始检查初始认证状态');
-      
       try {
         const response = await fetch('/api/auth/status', {
           credentials: 'include',
@@ -40,16 +38,13 @@ export default function HomePage() {
         
         if (response.ok) {
           const data = await response.json();
-          console.log('主页面：认证状态检查结果:', data);
           
           if (data.authenticated && data.accessToken && data.refreshToken) {
-            console.log('主页面：认证成功，设置OneDrive令牌');
             oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
             setIsAuthenticated(true);
             
             // 如果启用了OneDrive存储，尝试同步数据
             if (useOneDriveStorage()) {
-              console.log('主页面：检测到已启用OneDrive存储，尝试同步数据');
               await syncFromOneDrive();
               // 重新加载数据
               setLinks(getLinks());
@@ -58,7 +53,7 @@ export default function HomePage() {
           }
         }
       } catch (error) {
-        console.error('主页面：认证状态检查失败:', error);
+        // 静默处理错误，不影响用户体验
       }
     };
     

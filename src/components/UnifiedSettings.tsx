@@ -27,8 +27,6 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
   // 组件挂载时立即检查认证状态，确保页面刷新后能恢复登录状态
   useEffect(() => {
     const initialCheckAuthStatus = async () => {
-      console.log('设置面板：组件挂载时检查认证状态');
-      
       // 直接从服务器获取认证状态，而不只是检查本地OneDriveStorage
       try {
         const response = await fetch('/api/auth/status', {
@@ -37,21 +35,17 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
             'Cache-Control': 'no-cache, no-store, must-revalidate'
           }
         });
-        console.log('设置面板：初始认证检查API响应状态:', response.status);
         
         if (response.ok) {
           const data = await response.json();
-          console.log('设置面板：初始认证检查返回数据:', data);
           
           if (data.authenticated && data.accessToken && data.refreshToken) {
-            console.log('设置面板：初始认证成功，设置令牌');
             oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
             setIsAuthenticated(true);
-            console.log('设置面板：初始认证完成，用户已登录');
           }
         }
       } catch (error) {
-        console.error('设置面板：初始认证检查失败:', error);
+        // 静默处理错误
       }
     };
     
@@ -69,59 +63,44 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
     if (!isOpen) return;
     
     const checkAuthStatus = async () => {
-      console.log('设置面板：面板打开时检查认证状态');
-      
       // 检查当前存储设置
       const currentStorageSetting = useOneDriveStorage();
       setUseOneDrive(currentStorageSetting);
-      console.log('设置面板：当前存储设置:', currentStorageSetting);
       
       // 检查URL参数中的认证状态
       const urlParams = new URLSearchParams(window.location.search);
       const authParam = urlParams.get('auth');
-      console.log('设置面板：URL参数auth=', authParam);
       
       if (authParam === 'success') {
-        console.log('设置面板：检测到认证成功参数，开始验证认证状态');
-        
         // 从服务器重新检查认证状态
         try {
           const response = await fetch('/api/auth/status', {
             credentials: 'include'
           });
-          console.log('设置面板：认证状态API响应状态:', response.status);
           
           if (response.ok) {
             const data = await response.json();
-            console.log('设置面板：认证状态API返回数据:', data);
             
             if (data.authenticated && data.accessToken && data.refreshToken) {
-              console.log('设置面板：认证成功，设置令牌和存储状态');
               oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
               setIsAuthenticated(true);
               setUseOneDriveStorage(true);
-              console.log('设置面板：认证成功，已设置OneDrive存储');
             } else {
-              console.log('设置面板：认证状态API返回未认证');
               setIsAuthenticated(false);
             }
           } else {
-            console.log('设置面板：认证状态API请求失败:', response.status);
             setIsAuthenticated(false);
           }
         } catch (error) {
-          console.error('设置面板：检查认证状态失败:', error);
           setIsAuthenticated(false);
         }
         
         // 移除URL参数避免重复触发
         const newUrl = window.location.pathname;
         window.history.replaceState({}, '', newUrl);
-        console.log('设置面板：已移除URL参数');
       } else {
         // 更新认证状态
         const isLoggedIn = oneDriveStorage.isLoggedIn();
-        console.log('设置面板：oneDriveStorage.isLoggedIn() =', isLoggedIn);
         setIsAuthenticated(isLoggedIn);
       }
       
@@ -177,7 +156,6 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
         setSyncStatus('从OneDrive同步数据失败');
       }
     } catch (error) {
-      console.error('同步失败:', error);
       setSyncStatus('同步过程中发生错误');
     } finally {
       setIsSyncing(false);
@@ -203,7 +181,6 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
         setSyncStatus('同步到OneDrive失败');
       }
     } catch (error) {
-      console.error('同步失败:', error);
       setSyncStatus('同步过程中发生错误');
     } finally {
       setIsSyncing(false);
@@ -224,7 +201,6 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
       setSyncStatus('已退出OneDrive登录');
       setTimeout(() => setSyncStatus(null), 3000);
     } catch (error) {
-      console.error('退出登录失败:', error);
       setSyncStatus('退出登录失败');
       setTimeout(() => setSyncStatus(null), 3000);
     }
@@ -275,7 +251,6 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
         setImportStatus('数据导入成功');
         setTimeout(() => setImportStatus(null), 3000);
       } catch (error) {
-        console.error('导入失败:', error);
         setImportStatus('导入失败，请检查文件格式');
         setTimeout(() => setImportStatus(null), 3000);
       } finally {
@@ -306,8 +281,6 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
     // 确保在客户端执行
     if (typeof window === 'undefined') return;
     
-    console.log('应用背景设置:', settings.bgType);
-    
     // 获取body元素
     const body = document.getElementById('app-body') || document.body;
     if (!body) return;
@@ -317,14 +290,12 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
     
     // 根据背景类型设置不同的CSS变量
     if (settings.bgType === 'color') {
-      console.log('设置纯色背景:', settings.bgColor);
       root.style.setProperty('--bg-image', 'none');
       root.style.setProperty('--bg-color', settings.bgColor);
       // 直接设置body背景
       body.style.backgroundImage = 'none';
       body.style.backgroundColor = settings.bgColor;
     } else if (settings.bgType === 'image' && settings.bgImageUrl) {
-      console.log('设置图片背景:', settings.bgImageUrl);
       root.style.setProperty('--bg-image', `url(${settings.bgImageUrl})`);
       root.style.setProperty('--bg-color', 'transparent');
       // 直接设置body背景
@@ -332,26 +303,21 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
       body.style.backgroundColor = 'transparent';
     } else if (settings.bgType === 'gradient') {
       const gradient = getGradientBackground(settings.gradientPreset);
-      console.log('设置渐变背景:', gradient);
       root.style.setProperty('--bg-image', gradient);
       root.style.setProperty('--bg-color', 'transparent');
       // 直接设置body背景
       body.style.backgroundImage = gradient;
       body.style.backgroundColor = 'transparent';
     } else if (settings.bgType === 'upload' && settings.bgUploadUrl) {
-      console.log('设置上传图片背景:', settings.bgUploadUrl);
       root.style.setProperty('--bg-image', `url(${settings.bgUploadUrl})`);
       root.style.setProperty('--bg-color', 'transparent');
       // 直接设置body背景
       body.style.backgroundImage = `url(${settings.bgUploadUrl})`;
       body.style.backgroundColor = 'transparent';
     } else if (settings.bgType === 'bing') {
-      console.log('设置Bing每日一图背景');
       try {
         const imageUrl = await getBingImage();
         if (imageUrl) {
-          console.log('获取到Bing图片URL:', imageUrl);
-          
           // 直接设置背景，不进行图片预加载（避免CORS问题）
           // 由于API直接返回图片，浏览器会自动处理图片加载
           root.style.setProperty('--bg-image', `url(${imageUrl})`);
@@ -359,24 +325,18 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
           // 直接设置body背景
           body.style.backgroundImage = `url(${imageUrl})`;
           body.style.backgroundColor = 'transparent';
-          
-          console.log('Bing背景设置完成');
         } else {
           throw new Error('获取的图片URL为空');
         }
       } catch (error) {
-        console.error('获取Bing图片失败:', error);
         // 使用默认图片
         const defaultUrl = 'https://picsum.photos/1920/1080?random=1';
         root.style.setProperty('--bg-image', `url(${defaultUrl})`);
         root.style.setProperty('--bg-color', 'transparent');
         body.style.backgroundImage = `url(${defaultUrl})`;
         body.style.backgroundColor = 'transparent';
-        console.log('使用默认图片作为背景');
       }
     }
-    
-    console.log('背景设置完成');
   };
 
   if (!isOpen) return null;
