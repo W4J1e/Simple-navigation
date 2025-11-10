@@ -146,46 +146,22 @@ export function verifyJWTToken(token: string): any {
 
 // 从请求中获取用户信息
 export async function getUserFromRequest(req: NextRequest): Promise<any> {
-  console.log('getUserFromRequest：开始检查用户认证');
-  console.log('getUserFromRequest：请求URL:', req.url);
-  
-  // 检查所有cookies
-  const allCookies = req.cookies.getAll();
-  console.log('getUserFromRequest：所有cookies:', allCookies.map(c => ({ name: c.name, value: c.value ? '存在' : '不存在' })));
-  
   const token = req.cookies.get('auth_token')?.value;
-  console.log('getUserFromRequest：获取到的cookie token:', token ? `存在，长度: ${token.length}` : '不存在');
   
   if (!token) {
-    console.log('getUserFromRequest：没有找到认证token，返回null');
     return null;
   }
   
   try {
-    console.log('getUserFromRequest：开始验证JWT令牌');
     const payload = verifyJWTToken(token);
-    console.log('getUserFromRequest：JWT验证成功，payload:', {
-      id: payload.id,
-      displayName: payload.displayName,
-      email: payload.email,
-      accessTokenLength: payload.accessToken?.length,
-      refreshTokenLength: payload.refreshToken?.length
-    });
     return payload;
   } catch (error) {
-    console.error('getUserFromRequest：JWT验证失败:', error);
     return null;
   }
 }
 
 // 设置认证Cookie
 export function setAuthCookie(res: NextResponse, token: string, request?: NextRequest): void {
-  console.log('setAuthCookie：开始设置认证Cookie');
-  console.log('setAuthCookie：token长度:', token.length);
-  console.log('setAuthCookie：NODE_ENV:', process.env.NODE_ENV);
-  console.log('setAuthCookie：NEXTAUTH_URL:', process.env.NEXTAUTH_URL);
-  console.log('setAuthCookie：AZURE_REDIRECT_URI:', process.env.AZURE_REDIRECT_URI);
-  
   const cookieOptions: any = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -203,7 +179,6 @@ export function setAuthCookie(res: NextResponse, token: string, request?: NextRe
         // 移除端口号，只保留域名
         const domain = host.split(':')[0];
         cookieOptions.domain = domain;
-        console.log('setAuthCookie：从请求头设置domain为:', domain);
       }
     }
     
@@ -214,9 +189,8 @@ export function setAuthCookie(res: NextResponse, token: string, request?: NextRe
         try {
           const url = new URL(process.env.AZURE_REDIRECT_URI);
           cookieOptions.domain = url.hostname;
-          console.log('setAuthCookie：使用AZURE_REDIRECT_URI设置domain为:', url.hostname);
         } catch (error) {
-          console.error('setAuthCookie：解析AZURE_REDIRECT_URI失败:', error);
+          // 忽略错误，继续使用默认设置
         }
       }
       // 次选NEXTAUTH_URL
@@ -224,23 +198,14 @@ export function setAuthCookie(res: NextResponse, token: string, request?: NextRe
         try {
           const url = new URL(process.env.NEXTAUTH_URL);
           cookieOptions.domain = url.hostname;
-          console.log('setAuthCookie：使用NEXTAUTH_URL设置domain为:', url.hostname);
         } catch (error) {
-          console.error('setAuthCookie：解析NEXTAUTH_URL失败:', error);
+          // 忽略错误，继续使用默认设置
         }
       }
     }
-    
-    // 如果以上都失败，不设置domain（让浏览器自动处理）
-    if (!cookieOptions.domain) {
-      console.log('setAuthCookie：无法获取域名，将不设置domain（让浏览器自动处理）');
-    }
   }
   
-  console.log('setAuthCookie：最终Cookie选项:', cookieOptions);
-  
   res.cookies.set('auth_token', token, cookieOptions);
-  console.log('setAuthCookie：Cookie设置完成');
 }
 
 // 清除认证Cookie

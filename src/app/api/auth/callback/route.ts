@@ -35,32 +35,24 @@ function getBaseUrl(request?: NextRequest): string {
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('OAuth回调：开始处理认证回调');
-    
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get('code');
     const error = searchParams.get('error');
     
-    console.log('OAuth回调：URL参数 - code:', code ? '存在' : '不存在', 'error:', error || '无');
-    
     if (error) {
-      console.error('OAuth错误:', error);
       return NextResponse.redirect(
         new URL('/?error=auth_failed', getBaseUrl(request))
       );
     }
     
     if (!code) {
-      console.log('OAuth回调：没有找到code参数');
       return NextResponse.redirect(
         new URL('/?error=no_code', getBaseUrl(request))
       );
     }
     
-    console.log('OAuth回调：开始获取访问令牌');
     // 获取访问令牌
     const { accessToken, refreshToken } = await getAccessToken(code);
-    console.log('OAuth回调：获取访问令牌成功，accessToken长度:', accessToken.length, 'refreshToken长度:', refreshToken.length);
     
     // 获取用户信息
     const userResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
@@ -86,19 +78,12 @@ export async function GET(request: NextRequest) {
     
     // 使用实际的基础URL，考虑EdgeOne Pages的代理情况
     const baseUrl = getBaseUrl(request);
-    console.log('OAuth回调：重定向基础URL:', baseUrl);
     
     const response = NextResponse.redirect(
       new URL('/?auth=success', baseUrl)
     );
     
     setAuthCookie(response, token, request);
-    
-    console.log('认证成功，已设置Cookie，重定向到:', baseUrl + '/?auth=success');
-    console.log('OAuth回调：响应头设置:', {
-      location: response.headers.get('location'),
-      'set-cookie': response.headers.get('set-cookie')
-    });
     
     // 初始化OneDrive文件夹和默认配置
     try {
@@ -146,13 +131,11 @@ export async function GET(request: NextRequest) {
         await oneDriveService.writeFile('links.json', JSON.stringify(defaultLinks, null, 2));
       }
     } catch (error) {
-      console.error('初始化OneDrive配置失败:', error);
       // 不阻止登录流程，只记录错误
     }
     
     return response;
   } catch (error) {
-    console.error('OAuth回调错误:', error);
     return NextResponse.redirect(
       new URL('/?error=auth_callback_failed', getBaseUrl(request))
     );
