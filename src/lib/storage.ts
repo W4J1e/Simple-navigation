@@ -83,7 +83,7 @@ export function getSettings(): Settings {
       return { ...defaultSettings, ...parsed };
     }
   } catch (error) {
-    console.error('获取设置失败:', error);
+    // 静默处理错误
   }
   
   return defaultSettings;
@@ -93,8 +93,8 @@ export function getSettings(): Settings {
 export function saveSettings(settings: Settings): void {
   // 如果使用OneDrive存储，同时保存到OneDrive
   if (useOneDriveStorage() && oneDriveStorage.isLoggedIn()) {
-    oneDriveStorage.saveSettings(settings).catch(error => {
-      console.error('保存设置到OneDrive失败:', error);
+    oneDriveStorage.saveSettings(settings).catch(() => {
+      // 静默处理错误
     });
   }
   
@@ -104,7 +104,7 @@ export function saveSettings(settings: Settings): void {
   try {
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
   } catch (error) {
-    console.error('保存设置失败:', error);
+    // 静默处理错误
   }
 }
 
@@ -119,7 +119,7 @@ export function getLinks(): Link[] {
       return JSON.parse(stored);
     }
   } catch (error) {
-    console.error('获取链接失败:', error);
+    // 静默处理错误
   }
   
   return defaultLinks;
@@ -129,8 +129,8 @@ export function getLinks(): Link[] {
 export function saveLinks(links: Link[]): void {
   // 如果使用OneDrive存储，同时保存到OneDrive
   if (useOneDriveStorage() && oneDriveStorage.isLoggedIn()) {
-    oneDriveStorage.saveLinks(links).catch(error => {
-      console.error('保存链接到OneDrive失败:', error);
+    oneDriveStorage.saveLinks(links).catch(() => {
+      // 静默处理错误
     });
   }
   
@@ -140,7 +140,7 @@ export function saveLinks(links: Link[]): void {
   try {
     localStorage.setItem(STORAGE_KEYS.LINKS, JSON.stringify(links));
   } catch (error) {
-    console.error('保存链接失败:', error);
+    // 静默处理错误
   }
 }
 
@@ -157,15 +157,15 @@ export async function syncFromOneDrive(): Promise<boolean> {
       localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
     }
     
-    // 同步链接
+    // 同步链接 - 移除links.length > 0的限制，确保空列表也能同步
     const links = await oneDriveStorage.getLinks();
-    if (links && links.length > 0) {
+    if (links) {
       localStorage.setItem(STORAGE_KEYS.LINKS, JSON.stringify(links));
     }
     
     return true;
   } catch (error) {
-    console.error('从OneDrive同步数据失败:', error);
+    // 静默处理错误
     return false;
   }
 }
@@ -187,7 +187,7 @@ export async function syncToOneDrive(): Promise<boolean> {
     
     return settingsSuccess && linksSuccess;
   } catch (error) {
-    console.error('同步数据到OneDrive失败:', error);
+    // 静默处理错误
     return false;
   }
 }

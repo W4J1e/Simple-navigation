@@ -17,10 +17,8 @@ export class OneDriveStorage {
 
   // 设置用户令牌
   setUserToken(accessToken: string, refreshToken: string): void {
-    console.log('OneDriveStorage：设置用户令牌，accessToken长度:', accessToken?.length, 'refreshToken长度:', refreshToken?.length);
     this.userToken = accessToken;
     this.refreshToken = refreshToken;
-    console.log('OneDriveStorage：令牌设置完成，isLoggedIn():', this.isLoggedIn());
   }
 
   // 清除用户令牌
@@ -50,22 +48,19 @@ export class OneDriveStorage {
       
       return true;
     } catch (error) {
-      console.error('退出登录失败:', error);
+      // 静默处理错误
       return false;
     }
   }
 
   // 检查是否已登录
   isLoggedIn(): boolean {
-    const isLoggedIn = !!this.userToken;
-    console.log('OneDriveStorage：检查登录状态，userToken存在:', !!this.userToken, '结果:', isLoggedIn);
-    return isLoggedIn;
+    return !!this.userToken;
   }
 
   // 获取设置
   async getSettings(): Promise<Settings | null> {
     if (!this.userToken) {
-      console.error('用户未登录');
       return null;
     }
 
@@ -85,7 +80,7 @@ export class OneDriveStorage {
       const data = await response.json();
       return data.settings;
     } catch (error) {
-      console.error('获取设置失败:', error);
+      // 静默处理错误
       return null;
     }
   }
@@ -93,7 +88,6 @@ export class OneDriveStorage {
   // 保存设置
   async saveSettings(settings: Settings): Promise<boolean> {
     if (!this.userToken) {
-      console.error('用户未登录');
       return false;
     }
 
@@ -114,7 +108,7 @@ export class OneDriveStorage {
       const data = await response.json();
       return data.success;
     } catch (error) {
-      console.error('保存设置失败:', error);
+      // 静默处理错误
       return false;
     }
   }
@@ -122,7 +116,6 @@ export class OneDriveStorage {
   // 获取链接
   async getLinks(): Promise<Link[]> {
     if (!this.userToken) {
-      console.error('用户未登录');
       return [];
     }
 
@@ -142,7 +135,7 @@ export class OneDriveStorage {
       const data = await response.json();
       return data.links || [];
     } catch (error) {
-      console.error('获取链接失败:', error);
+      // 静默处理错误
       return [];
     }
   }
@@ -150,7 +143,6 @@ export class OneDriveStorage {
   // 保存链接
   async saveLinks(links: Link[]): Promise<boolean> {
     if (!this.userToken) {
-      console.error('用户未登录');
       return false;
     }
 
@@ -171,7 +163,7 @@ export class OneDriveStorage {
       const data = await response.json();
       return data.success;
     } catch (error) {
-      console.error('保存链接失败:', error);
+      // 静默处理错误
       return false;
     }
   }
