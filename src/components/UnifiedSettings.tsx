@@ -444,7 +444,6 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
                             </div>
                           )}
                           <div>
-                            <div className="text-green-600 dark:text-green-400 font-medium">✓ 已登录 OneDrive</div>
                             {userInfo?.displayName && (
                               <h4 className="font-medium text-gray-900 dark:text-white">{userInfo.displayName}</h4>
                             )}

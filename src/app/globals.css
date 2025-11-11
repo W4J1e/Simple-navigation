@@ -4,22 +4,30 @@
 
 :root {
   --bg-image: none;
-  --bg-color: #1a1a2e;
+  --bg-color: #ffffff;
+  --text-color: #333333;
   --bg-size: cover;
   --bg-position: center;
   --bg-repeat: no-repeat;
+}
+
+/* 深色模式样式 */
+.dark {
+  --bg-color: #1a1a2e;
+  --text-color: #ffffff;
 }
 
 /* 确保body背景样式正确应用 */
 body {
   background-image: var(--bg-image);
   background-color: var(--bg-color);
+  color: var(--text-color);
   background-size: var(--bg-size, cover);
   background-position: var(--bg-position, center);
   background-repeat: var(--bg-repeat, no-repeat);
   background-attachment: fixed;
   min-height: 100vh;
-  transition: background-image 0.5s ease-in-out, background-color 0.5s ease-in-out;
+  transition: background-image 0.5s ease-in-out, background-color 0.5s ease-in-out, color 0.3s ease-in-out;
 }
 
 @layer utilities {

@@ -29,7 +29,7 @@ export default function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
               <i className="fa fa-compass text-white text-2xl"></i>
             </div>
             <h3 className="text-lg font-medium text-gray-800 dark:text-white">SimpleNav</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">v0.0.1</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">v0.0.2</p>
           </div>
           
           <div className="border-t dark:border-gray-700 pt-4">
