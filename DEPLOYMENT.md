@@ -44,7 +44,7 @@
 4. 在 "Authentication" 部分配置：
    - 添加 Web 平台
    - 开发环境重定向 URI: `http://localhost:3000/api/auth/callback`
-   - 生产环境重定向 URI: `https://example.com/api/auth/callback`
+   - 生产环境重定向 URI: `https://yourdomain.com/api/auth/callback`
 5. 在 "API permissions" 部分添加以下权限：
    - `Microsoft Graph` > `Files.ReadWrite.AppFolder`
    - `Microsoft Graph` > `offline_access`

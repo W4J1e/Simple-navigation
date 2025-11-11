@@ -27,15 +27,15 @@ export const defaultLinks: Link[] = [
   },
   {
     id: '2',
-    name: 'Google',
-    url: 'https://google.com',
-    icon: 'fab fa-google',
-    category: '搜索',
-    useFavicon: false
+    name: 'W4J1e',
+    url: 'https://hin.cool',
+    icon: '',
+    category: '博客',
+    useFavicon: true
   },
   {
     id: '3',
-    name: 'bilibili',
+    name: '哔哩哔哩',
     url: 'https://bilibili.com',
     icon: '',
     category: '娱乐',
@@ -43,12 +43,20 @@ export const defaultLinks: Link[] = [
   },
   {
     id: '4',
-    name: 'LonelyGod',
-    url: 'https://hin.cool',
+    name: '腾讯云',
+    url: 'https://cloud.tencent.com/act/cps/redirect?redirect=2446&cps_key=d921b4e5fecc726bd40354300d05f538&from=console',
     icon: '',
-    category: '博客',
+    category: '开发',
     useFavicon: true
-  }
+  },
+  {
+    id: '5',
+    name: '多吉云',
+    url: 'https://www.dogecloud.com/?iuid=2384',
+    icon: 'fas fa-github',
+    category: '开发',
+    useFavicon: false
+  }  
 ];
 
 // 存储键名

@@ -84,7 +84,7 @@ export default function LinksGrid({ links, layout, selectedCategory, onEditLink,
             className={`category-tab px-4 py-2 rounded-full whitespace-nowrap transition-all ${
               selectedCategory === category
                 ? 'bg-primary text-white'
-                : 'bg-white/10 hover:bg-white/20 text-white'
+                : 'bg-white/10 hover:bg-white/20 text-white dark:bg-gray-800/80 dark:hover:bg-gray-700/80 dark:text-white'
             }`}
             onClick={() => {
               // 这里需要父组件处理分类切换
@@ -107,7 +107,7 @@ export default function LinksGrid({ links, layout, selectedCategory, onEditLink,
             <div 
               className={`bg-white/10 backdrop-blur-md rounded-xl p-4 text-white hover:bg-white/20 transition-all group link-card relative ${
                 editingLinkId === link.id ? 'ring-2 ring-blue-400' : ''
-              }`}
+              } dark:bg-gray-800/80 dark:hover:bg-gray-700/80`}
               onMouseDown={() => handleLongPressStart(link.id)}
               onMouseUp={handleLongPressEnd}
               onMouseLeave={handleLongPressEnd}
@@ -209,7 +209,7 @@ export default function LinksGrid({ links, layout, selectedCategory, onEditLink,
         {/* 新增链接卡片 */}
         <div className={layout === 'masonry' ? 'masonry-item' : ''}>
           <div 
-            className="bg-white/10 backdrop-blur-md rounded-xl p-4 text-white hover:bg-white/20 transition-all group link-card cursor-pointer flex items-center justify-center h-full"
+            className="bg-white/10 backdrop-blur-md rounded-xl p-4 text-white hover:bg-white/20 transition-all group link-card cursor-pointer flex items-center justify-center h-full dark:bg-gray-800/80 dark:hover:bg-gray-700/80"
             onClick={onAddLink}
           >
             <i className="fa fa-plus-circle text-3xl"></i>

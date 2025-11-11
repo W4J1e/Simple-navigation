@@ -71,8 +71,6 @@ export default function HomePage() {
     // 确保在客户端执行
     if (typeof window === 'undefined') return;
     
-    console.log('应用背景设置:', settings.bgType);
-    
     // 获取body元素
     const body = document.getElementById('app-body') || document.body;
     if (!body) return;
@@ -82,14 +80,12 @@ export default function HomePage() {
     
     // 根据背景类型设置不同的CSS变量
     if (settings.bgType === 'color') {
-      console.log('设置纯色背景:', settings.bgColor);
       root.style.setProperty('--bg-image', 'none');
       root.style.setProperty('--bg-color', settings.bgColor);
       // 直接设置body背景
       body.style.backgroundImage = 'none';
       body.style.backgroundColor = settings.bgColor;
     } else if (settings.bgType === 'image' && settings.bgImageUrl) {
-      console.log('设置图片背景:', settings.bgImageUrl);
       root.style.setProperty('--bg-image', `url(${settings.bgImageUrl})`);
       root.style.setProperty('--bg-color', 'transparent');
       // 直接设置body背景
@@ -97,26 +93,21 @@ export default function HomePage() {
       body.style.backgroundColor = 'transparent';
     } else if (settings.bgType === 'gradient') {
       const gradient = getGradientBackground(settings.gradientPreset);
-      console.log('设置渐变背景:', gradient);
       root.style.setProperty('--bg-image', gradient);
       root.style.setProperty('--bg-color', 'transparent');
       // 直接设置body背景
       body.style.backgroundImage = gradient;
       body.style.backgroundColor = 'transparent';
     } else if (settings.bgType === 'upload' && settings.bgUploadUrl) {
-      console.log('设置上传图片背景:', settings.bgUploadUrl);
       root.style.setProperty('--bg-image', `url(${settings.bgUploadUrl})`);
       root.style.setProperty('--bg-color', 'transparent');
       // 直接设置body背景
       body.style.backgroundImage = `url(${settings.bgUploadUrl})`;
       body.style.backgroundColor = 'transparent';
     } else if (settings.bgType === 'bing') {
-      console.log('设置Bing每日一图背景');
       try {
         const imageUrl = await getBingImage();
         if (imageUrl) {
-          console.log('获取到Bing图片URL:', imageUrl);
-          
           // 直接设置背景，不进行图片预加载（避免CORS问题）
           // 由于API直接返回图片，浏览器会自动处理图片加载
           root.style.setProperty('--bg-image', `url(${imageUrl})`);
@@ -124,24 +115,18 @@ export default function HomePage() {
           // 直接设置body背景
           body.style.backgroundImage = `url(${imageUrl})`;
           body.style.backgroundColor = 'transparent';
-          
-          console.log('Bing背景设置完成');
         } else {
           throw new Error('获取的图片URL为空');
         }
       } catch (error) {
-        console.error('获取Bing图片失败:', error);
         // 使用默认图片
         const defaultUrl = 'https://picsum.photos/1920/1080?random=1';
         root.style.setProperty('--bg-image', `url(${defaultUrl})`);
         root.style.setProperty('--bg-color', 'transparent');
         body.style.backgroundImage = `url(${defaultUrl})`;
         body.style.backgroundColor = 'transparent';
-        console.log('使用默认图片作为背景');
       }
     }
-    
-    console.log('背景设置完成');
   };
 
   // 初始化数据

@@ -17,6 +17,19 @@
   --text-color: #ffffff;
 }
 
+/* 深色模式下的背景遮罩效果 */
+.dark body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  z-index: 1;
+}
+
 /* 确保body背景样式正确应用 */
 body {
   background-image: var(--bg-image);
