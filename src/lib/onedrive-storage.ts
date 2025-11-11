@@ -30,12 +30,9 @@ export class OneDriveStorage {
   // 退出登录
   async logout(): Promise<boolean> {
     try {
-      // 调用后端API退出登录
+      // 调用后端API退出登录 - 修改为GET方法以匹配后端实现
       const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        method: 'GET',
         credentials: 'include',
       });
 
