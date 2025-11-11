@@ -53,7 +53,7 @@ export const defaultLinks: Link[] = [
     id: '5',
     name: '多吉云',
     url: 'https://www.dogecloud.com/?iuid=2384',
-    icon: 'fas fa-github',
+    icon: 'fas fa-cloud',
     category: '开发',
     useFavicon: false
   }  

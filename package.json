@@ -1,6 +1,6 @@
 {
-  "name": "nav-nextjs",
-  "version": "0.1.0",
+  "name": "SimpleNav",
+  "version": "0.0.3",
   "private": true,
   "scripts": {
     "dev": "next dev",

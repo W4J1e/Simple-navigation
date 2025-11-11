@@ -25,11 +25,11 @@ export default function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
         
         <div className="space-y-4">
           <div className="text-center">
-            <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
-              <i className="fa fa-compass text-white text-2xl"></i>
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+              <img src="/favicon.ico" alt="网站图标" className="w-full h-full object-contain" />
             </div>
             <h3 className="text-lg font-medium text-gray-800 dark:text-white">SimpleNav</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">v0.0.2</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">v0.0.3</p>
           </div>
           
           <div className="border-t dark:border-gray-700 pt-4">
@@ -38,7 +38,7 @@ export default function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
                 <i className="fa fa-user text-blue-500 mr-3"></i>
                 <div>
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">作者</p>
-                  <a href="https://hin.cool" target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">w4j1e</a>
+                  <a href="https://hin.cool" target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">W4J1e</a>
                 </div>
               </div>
               
@@ -66,7 +66,7 @@ export default function AboutDialog({ isOpen, onClose }: AboutDialogProps) {
           
           <div className="border-t dark:border-gray-700 pt-4">
             <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-              © 2025 SimpleNav. 保留所有权利.
+              © 2025 <a href="https://github.com/W4J1e/Simple-navigation" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline dark:text-blue-400">SimpleNav</a>. 保留所有权利.
             </p>
           </div>
         </div>
