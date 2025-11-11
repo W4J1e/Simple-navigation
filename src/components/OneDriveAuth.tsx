@@ -7,11 +7,18 @@ interface OneDriveAuthProps {
   onAuthChange: (isAuthenticated: boolean) => void;
 }
 
+interface UserInfo {
+  displayName: string;
+  email: string;
+  photo?: string;
+}
+
 export default function OneDriveAuth({ onAuthChange }: OneDriveAuthProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
   useEffect(() => {
     // 检查URL参数，处理OAuth回调
@@ -92,13 +99,23 @@ export default function OneDriveAuth({ onAuthChange }: OneDriveAuthProps) {
             oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
             onAuthChange(true);
             setIsAuthenticated(true);
+            // 设置用户信息
+            if (data.user) {
+              setUserInfo({
+                displayName: data.user.displayName || 'OneDrive用户',
+                email: data.user.email || '',
+                photo: data.user.photo || undefined
+              });
+            }
           } else {
             onAuthChange(false);
             setIsAuthenticated(false);
+            setUserInfo(null);
           }
         } else {
           onAuthChange(false);
           setIsAuthenticated(false);
+          setUserInfo(null);
         }
       } else {
         onAuthChange(false);
@@ -113,6 +130,7 @@ export default function OneDriveAuth({ onAuthChange }: OneDriveAuthProps) {
       }, 2000); // 2秒后重试
       onAuthChange(false);
       setIsAuthenticated(false);
+      setUserInfo(null);
     } finally {
       setIsLoading(false);
     }
@@ -130,6 +148,8 @@ export default function OneDriveAuth({ onAuthChange }: OneDriveAuthProps) {
       
       oneDriveStorage.clearUserToken();
       onAuthChange(false);
+      setIsAuthenticated(false);
+      setUserInfo(null);
     } catch (error) {
       // 静默处理错误
     }
@@ -176,9 +196,37 @@ export default function OneDriveAuth({ onAuthChange }: OneDriveAuthProps) {
     );
   }
 
-  // 如果已认证，不显示登录框
-  if (isAuthenticated) {
-    return null;
+  // 如果已认证，显示用户信息和退出按钮
+  if (isAuthenticated && userInfo) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-4">
+        <div className="flex items-center space-x-3 mb-3">
+          {userInfo.photo ? (
+            <img 
+              src={userInfo.photo} 
+              alt="用户头像" 
+              className="w-10 h-10 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white">
+              {userInfo.displayName.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div>
+            <h4 className="font-medium text-gray-900 dark:text-white">{userInfo.displayName}</h4>
+            {userInfo.email && (
+              <p className="text-sm text-gray-600 dark:text-gray-400">{userInfo.email}</p>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="w-full text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white py-2 text-sm"
+        >
+          退出登录
+        </button>
+      </div>
+    );
   }
 
   return (
