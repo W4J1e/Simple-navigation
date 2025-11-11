@@ -1,26 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
+// 确保这是一个动态路由，不被静态生成
 export const dynamic = 'force-dynamic'; 
-export const runtime = 'nodejs'; 
 
-export async function GET(request: NextRequest) {
-  try {
-    // 创建重定向响应
-    const response = NextResponse.redirect('/?auth=logged_out');
-    
-    // 直接设置空cookie并设置过期时间为0，避免依赖clearAuthCookie函数
-    response.cookies.set('auth_token', '', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 0,
-      path: '/'
-    });
-    
-    return response;
-  } catch (error) {
-    // 发生错误时仍然返回重定向响应，确保用户体验
-    console.error('退出登录过程中发生错误:', error);
-    return NextResponse.redirect('/?auth=logged_out');
-  }
+// 只实现GET方法，确保与前端调用一致
+export async function GET() {
+  // 非常简单的实现，只返回重定向响应
+  // 避免任何可能导致错误的操作
+  return NextResponse.redirect('/?auth=logged_out');
 }
