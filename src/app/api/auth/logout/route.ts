@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clearAuthCookie } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic'; 
 export const runtime = 'nodejs'; 
@@ -9,8 +8,14 @@ export async function GET(request: NextRequest) {
     // 创建重定向响应
     const response = NextResponse.redirect('/?auth=logged_out');
     
-    // 尝试清除认证Cookie
-    clearAuthCookie(response);
+    // 直接设置空cookie并设置过期时间为0，避免依赖clearAuthCookie函数
+    response.cookies.set('auth_token', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/'
+    });
     
     return response;
   } catch (error) {
