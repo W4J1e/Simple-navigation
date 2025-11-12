@@ -116,9 +116,53 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
         const newUrl = window.location.pathname;
         window.history.replaceState({}, '', newUrl);
       } else {
-        // 更新认证状态
-        const isLoggedIn = oneDriveStorage.isLoggedIn();
-        setIsAuthenticated(isLoggedIn);
+        // 每次打开设置面板时，都从服务器重新检查认证状态，而不仅仅依赖本地存储
+        try {
+          const response = await fetch('/api/auth/status', {
+            credentials: 'include',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate'
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            
+            if (data.authenticated && data.accessToken && data.refreshToken) {
+              oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
+              setIsAuthenticated(true);
+              // 保存用户信息
+              if (data.user) {
+                setUserInfo(data.user);
+              }
+            } else {
+              // 服务器返回未认证，清除本地登录状态
+              setIsAuthenticated(false);
+              setUserInfo(null);
+              // 如果当前设置为使用OneDrive但未认证，自动切换到本地存储
+              if (useOneDrive) {
+                setUseOneDrive(false);
+                setUseOneDriveStorage(false);
+              }
+            }
+          } else {
+            // 请求失败，默认为未认证状态
+            setIsAuthenticated(false);
+            setUserInfo(null);
+            if (useOneDrive) {
+              setUseOneDrive(false);
+              setUseOneDriveStorage(false);
+            }
+          }
+        } catch (error) {
+          // 出错时也默认为未认证状态
+          setIsAuthenticated(false);
+          setUserInfo(null);
+          if (useOneDrive) {
+            setUseOneDrive(false);
+            setUseOneDriveStorage(false);
+          }
+        }
       }
       
       // 加载当前设置
