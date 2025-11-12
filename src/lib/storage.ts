@@ -159,21 +159,23 @@ export async function syncFromOneDrive(): Promise<boolean> {
   }
   
   try {
-    // 同步设置
+    // 同步设置 - 确保设置对象有效且不为空
     const settings = await oneDriveStorage.getSettings();
-    if (settings) {
+    if (settings && Object.keys(settings).length > 0) {
       localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
     }
     
-    // 同步链接 - 移除links.length > 0的限制，确保空列表也能同步
+    // 同步链接 - 确保链接数组有效且有内容
+    // 不使用空数组覆盖本地数据，避免丢失用户的链接
     const links = await oneDriveStorage.getLinks();
-    if (links) {
+    if (links && Array.isArray(links) && links.length > 0) {
       localStorage.setItem(STORAGE_KEYS.LINKS, JSON.stringify(links));
     }
     
     return true;
   } catch (error) {
     // 静默处理错误
+    console.error('从OneDrive同步数据失败:', error);
     return false;
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import Clock from '@/components/Clock';
 import Search from '@/components/Search';
@@ -18,6 +18,8 @@ export default function HomePage() {
   const [links, setLinks] = useState<Link[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // 使用useRef追踪是否已初始化，避免重复同步
+  const wasInitializedRef = useRef(false);
   
   const [isLinkFormOpen, setIsLinkFormOpen] = useState(false);
   const [editingLink, setEditingLink] = useState<Link | null>(null);
@@ -36,29 +38,48 @@ export default function HomePage() {
           }
         });
         
-        if (response.ok) {
-          const data = await response.json();
+        // 无论响应状态如何，都处理结果
+        const data = await response.json();
+        
+        // 检查认证状态是否有变化
+        const wasAuthenticated = isAuthenticated;
+        
+        if (response.ok && data.authenticated && data.accessToken && data.refreshToken) {
+          // 认证有效，更新token和状态
+          oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
+          setIsAuthenticated(true);
           
-          if (data.authenticated && data.accessToken && data.refreshToken) {
-            oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
-            setIsAuthenticated(true);
-            
-            // 如果启用了OneDrive存储，尝试同步数据
-            if (useOneDriveStorage()) {
-              await syncFromOneDrive();
-              // 重新加载数据
-              setLinks(getLinks());
-              setSettings(getSettings());
-            }
+          // 如果启用了OneDrive存储并且认证状态发生了变化或首次认证成功，尝试同步数据
+          if (useOneDriveStorage() && (!wasAuthenticated || !wasInitializedRef.current)) {
+            await syncFromOneDrive();
+            // 重新加载数据
+            setLinks(getLinks());
+            setSettings(getSettings());
+          }
+        } else {
+          // 认证无效或已过期，清除状态
+          oneDriveStorage.clearUserToken();
+          setIsAuthenticated(false);
+          
+          // 如果之前是认证状态，需要重置OneDrive存储设置
+          if (wasAuthenticated) {
+            setUseOneDriveStorage(false);
           }
         }
       } catch (error) {
-        // 静默处理错误，不影响用户体验
+        console.error('检查认证状态失败:', error);
+        // 发生错误时，认为认证可能已失效，清除状态
+        oneDriveStorage.clearUserToken();
+        setIsAuthenticated(false);
+        // 重置OneDrive存储设置
+        setUseOneDriveStorage(false);
       }
     };
     
     // 立即执行认证检查
-    checkInitialAuthStatus();
+    checkInitialAuthStatus().then(() => {
+      wasInitializedRef.current = true;
+    });
     
     // 设置定期检查（每60秒）
     const intervalId = setInterval(checkInitialAuthStatus, 60000);
@@ -178,9 +199,14 @@ export default function HomePage() {
       let loadedLinks = getLinks();
       let loadedSettings = getSettings();
       
-      // 如果使用OneDrive存储且已认证，尝试从OneDrive同步数据
-      if (useOneDriveStorage() && oneDriveStorage.isLoggedIn()) {
+      // 优化同步触发条件：
+      // 1. 只有在使用OneDrive存储
+      // 2. oneDriveStorage.isLoggedIn()返回true（表明有token）
+      // 3. 当前有认证状态时，才尝试从OneDrive同步数据
+      // 这样可以避免认证已失效但本地状态未更新时的无效同步尝试
+      if (useOneDriveStorage() && oneDriveStorage.isLoggedIn() && isAuthenticated) {
         try {
+          console.log('尝试从OneDrive同步数据...');
           const syncSuccess = await syncFromOneDrive();
           if (syncSuccess) {
             // 重新加载本地数据
@@ -190,7 +216,12 @@ export default function HomePage() {
           }
         } catch (error) {
           console.error('从OneDrive同步数据失败:', error);
+          // 同步失败时不修改本地数据，保持现有数据
         }
+      } else if (useOneDriveStorage() && !isAuthenticated) {
+        console.log('检测到启用了OneDrive存储但未认证，自动切换到本地存储');
+        // 如果启用了OneDrive存储但未认证，自动切换到本地存储
+        setUseOneDriveStorage(false);
       }
       
       // 确保links是数组
