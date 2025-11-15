@@ -51,7 +51,7 @@ export default function HelpDialog({ isOpen, onClose }: HelpDialogProps) {
             
             <div className="flex">
               <div>
-                <p className="text-sm">5. 更多开发和使用可以访问 <a href="https://hin.cool" target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">我的博客</a></p>
+                <p className="text-sm">5. 更多开发和使用可以访问 <a href="https://hin.cool/posts/simplenav.html" target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">我的博客</a></p>
               </div>
             </div>
           </div>

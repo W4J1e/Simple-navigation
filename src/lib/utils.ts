@@ -12,16 +12,7 @@ export const getFaviconUrl = (url: string): string => {
 export const getBetterFaviconUrl = (url: string): string => {
   try {
     const parsedUrl = new URL(url);
-    // 尝试多种favicon路径
-    const faviconPaths = [
-      `${parsedUrl.protocol}//${parsedUrl.hostname}/favicon.ico`,
-      `${parsedUrl.protocol}//${parsedUrl.hostname}/favicon.png`,
-      `${parsedUrl.protocol}//${parsedUrl.hostname}/favicon.jpg`,
-      `${parsedUrl.protocol}//${parsedUrl.hostname}/favicon.svg`
-    ];
-    
-    // 返回第一个路径，让浏览器尝试加载
-    return faviconPaths[0];
+    return `${parsedUrl.protocol}//${parsedUrl.hostname}/favicon.ico`;
   } catch (e) {
     return 'https://picsum.photos/32/32';
   }

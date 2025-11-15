@@ -1,8 +1,15 @@
 'use client';
 
 import { Link } from '@/types';
-import { getFaviconUrl, getBetterFaviconUrl } from '@/lib/utils';
-import { useState, useRef, useEffect } from 'react';
+import { getBetterFaviconUrl } from '@/lib/utils';
+import { useState, useEffect } from 'react';
+
+// 热榜项目类型
+interface HotBoardItem {
+  title: string;
+  hot: number;
+  url: string;
+}
 
 interface LinksGridProps {
   links: Link[];
@@ -12,11 +19,46 @@ interface LinksGridProps {
   onDeleteLink: (link: Link) => void;
   onAddLink: () => void;
   onLinksReorder: (newOrder: Link[]) => void;
+  onHotBoardClick?: () => void; // 热榜卡片点击事件
 }
 
-export default function LinksGrid({ links, layout, selectedCategory, onEditLink, onDeleteLink, onAddLink, onLinksReorder }: LinksGridProps) {
+export default function LinksGrid({ links, layout, selectedCategory, onEditLink, onDeleteLink, onAddLink, onLinksReorder, onHotBoardClick }: LinksGridProps) {
   // 确保links是数组
   const safeLinks = Array.isArray(links) ? links : [];
+  
+  // 知乎热榜数据
+  const [hotBoardData, setHotBoardData] = useState<HotBoardItem[]>([]);
+  const [isLoadingHotBoard, setIsLoadingHotBoard] = useState(false);
+  
+  // 加载热榜数据
+  useEffect(() => {
+    const fetchHotBoardData = async () => {
+      setIsLoadingHotBoard(true);
+      try {
+        const response = await fetch('/api/zhihu-hot');
+        if (response.ok) {
+          const data = await response.json();
+          // 只取前5条数据
+          const formattedData = data.list.slice(0, 5).map((item: any) => ({
+            title: item.title,
+            hot: item.hot_value,
+            url: item.url
+          }));
+          setHotBoardData(formattedData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch hot board data:', error);
+      } finally {
+        setIsLoadingHotBoard(false);
+      }
+    };
+    
+    fetchHotBoardData();
+    
+    // 每十分钟自动更新一次
+    const interval = setInterval(fetchHotBoardData, 600000);
+    return () => clearInterval(interval);
+  }, []);
   
   // 右键菜单状态
   const [contextMenu, setContextMenu] = useState<{
@@ -48,8 +90,9 @@ export default function LinksGrid({ links, layout, selectedCategory, onEditLink,
     };
   }, []);
   
-  // 右键菜单处理
+  // 右键菜单处理 - 热榜卡片不需要右键菜单
   const handleContextMenu = (e: React.MouseEvent, link: Link) => {
+    if (link.isHotBoard) return;
     e.preventDefault();
     setContextMenu({
       visible: true,
@@ -115,7 +158,12 @@ export default function LinksGrid({ links, layout, selectedCategory, onEditLink,
   }
 
   // 获取所有唯一分类
-  const categories = ['all', '常用', ...new Set(safeLinks.map(link => link.category))];
+  const linkCategories = new Set(safeLinks.map(link => link.category));
+  // 确保'常用'分类只出现一次
+  if (linkCategories.has('常用')) {
+    linkCategories.delete('常用');
+  }
+  const categories = ['all', '常用', ...linkCategories];
 
   // 获取网格样式类
   const getGridClasses = () => {
@@ -157,13 +205,15 @@ export default function LinksGrid({ links, layout, selectedCategory, onEditLink,
         {filteredLinks.map((link) => (
           <div 
             key={link.id} 
-            className={layout === 'masonry' ? 'masonry-item' : ''}
+            className={`${layout === 'masonry' ? 'masonry-item' : ''} ${link.isHotBoard ? 'row-span-2' : ''}`}
           >
             <div 
               className={`bg-white/10 backdrop-blur-md rounded-xl p-4 text-white hover:bg-white/20 transition-all group link-card relative dark:bg-gray-800/80 dark:hover:bg-gray-700/80 ${
                 draggedLinkId === link.id ? 'opacity-50 transform scale-105' : ''
               } ${
                 draggedOverLinkId === link.id ? 'ring-2 ring-blue-400' : ''
+              } ${
+                link.isHotBoard ? 'h-full flex flex-col justify-between' : ''
               }`}
               onContextMenu={(e) => handleContextMenu(e, link)}
               draggable="true"
@@ -171,30 +221,81 @@ export default function LinksGrid({ links, layout, selectedCategory, onEditLink,
               onDragOver={(e) => handleDragOver(e, link)}
               onDragEnd={handleDragEnd}
               onDragLeave={handleDragLeave}
+              onClick={(e) => {
+                if (link.isHotBoard && onHotBoardClick) {
+                  e.preventDefault();
+                  onHotBoardClick();
+                }
+              }}
             >
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-4 w-full">
-                  <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
-                    {link.useFavicon ? (
-                      <img 
-                        src={getBetterFaviconUrl(link.url)} 
-                        alt={`${link.name}图标`} 
-                        className="w-10 h-10 rounded" 
-                        onError={(e) => {
-                          // 如果favicon加载失败，显示默认图标
-                          e.currentTarget.style.display = 'none';
-                          const defaultIcon = document.createElement('i');
-                          defaultIcon.className = 'fa fa-link text-2xl';
-                          e.currentTarget.parentNode?.insertBefore(defaultIcon, e.currentTarget.nextSibling);
-                        }}
-                      />
+              {link.isHotBoard ? (
+                <div className="flex flex-col h-full">
+                  <div 
+                    className="flex items-center gap-2 mb-3 cursor-pointer hover:text-orange-400 transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (onHotBoardClick) {
+                        onHotBoardClick();
+                      }
+                    }}
+                  >
+                    <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                      <i className="fa fa-fire text-xl text-orange-500"></i>
+                    </div>
+                    <span className="font-medium truncate text-base">知乎热榜</span>
+                  </div>
+                  
+                  <div className="space-y-2 mt-2 flex-grow">
+                    {isLoadingHotBoard ? (
+                      <div className="text-center py-2">
+                        <i className="fa fa-spinner fa-spin text-sm text-gray-400"></i>
+                      </div>
+                    ) : hotBoardData.length === 0 ? (
+                      <div className="text-sm text-gray-300 text-center py-2">
+                        暂无数据
+                      </div>
                     ) : (
-                      <i className={`fa ${link.icon || 'fa-link'} text-2xl`}></i>
+                      hotBoardData.map((item, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <span className="text-xs font-medium text-gray-400 w-4">{index + 1}</span>
+                          <a 
+                            href={item.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-xs text-gray-200 hover:text-white truncate flex-grow"
+                          >
+                            {item.title}
+                          </a>
+                        </div>
+                      ))
                     )}
                   </div>
-                  <span className="font-medium truncate text-lg">{link.name}</span>
                 </div>
-              </div>
+              ) : (
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-4 w-full">
+                    <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
+                      {link.useFavicon ? (
+                        <img 
+                          src={getBetterFaviconUrl(link.url)} 
+                          alt={`${link.name}图标`} 
+                          className="w-10 h-10 rounded" 
+                          onError={(e) => {
+                            // 如果favicon加载失败，显示默认图标
+                            e.currentTarget.style.display = 'none';
+                            const defaultIcon = document.createElement('i');
+                            defaultIcon.className = 'fa fa-link text-2xl';
+                            e.currentTarget.parentNode?.insertBefore(defaultIcon, e.currentTarget.nextSibling);
+                          }}
+                        />
+                      ) : (
+                        <i className={`fa ${link.icon || 'fa-link'} text-2xl`}></i>
+                      )}
+                    </div>
+                    <span className="font-medium truncate text-lg">{link.name}</span>
+                  </div>
+                </div>
+              )}
               <a href={link.url} target="_blank" rel="noopener noreferrer" className="absolute inset-0 w-full h-full"></a>
             </div>
           </div>

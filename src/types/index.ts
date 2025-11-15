@@ -5,6 +5,7 @@ export interface Link {
   icon: string;
   category: string;
   useFavicon: boolean;
+  isHotBoard?: boolean; // 标识是否为热榜卡片
 }
 
 export interface Settings {

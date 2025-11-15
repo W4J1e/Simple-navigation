@@ -10,6 +10,7 @@ import Footer from '@/components/Footer';
 import UnifiedSettings from '@/components/UnifiedSettings';
 import AboutDialog from '@/components/AboutDialog';
 import HelpDialog from '@/components/HelpDialog';
+import ZhihuHotBoardDialog from '@/components/ZhihuHotBoardDialog';
 import { Link, Settings } from '@/types';
 import { getLinks, saveLinks, getSettings, saveSettings, useOneDriveStorage, setUseOneDriveStorage, syncFromOneDrive, defaultSettings } from '@/lib/storage';
 import { oneDriveStorage } from '@/lib/onedrive-storage';
@@ -28,6 +29,7 @@ export default function HomePage() {
   const [isUnifiedSettingsOpen, setIsUnifiedSettingsOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isZhihuHotBoardOpen, setIsZhihuHotBoardOpen] = useState(false);
   
   // 页面加载时立即检查认证状态
   useEffect(() => {
@@ -155,16 +157,11 @@ export default function HomePage() {
   // 初始化数据
   useEffect(() => {
     const initializeData = async () => {
-      console.log('页面初始化：开始检查认证状态');
-      
       // 检查URL参数中的认证状态
       const urlParams = new URLSearchParams(window.location.search);
       const authParam = urlParams.get('auth');
-      console.log('页面初始化：URL参数auth=', authParam);
       
       if (authParam === 'success') {
-        console.log('页面初始化：检测到认证成功参数，开始验证认证状态');
-        
         // 尝试从cookie获取认证信息并设置到oneDriveStorage
         try {
           const response = await fetch('/api/auth/status', { 
@@ -173,35 +170,26 @@ export default function HomePage() {
               'Cache-Control': 'no-cache, no-store, must-revalidate'
             }
           });
-          console.log('页面初始化：认证状态API响应状态:', response.status);
           
           if (response.ok) {
             const data = await response.json();
-            console.log('页面初始化：认证状态API返回数据:', data);
             
             if (data.authenticated && data.accessToken && data.refreshToken) {
-              console.log('页面初始化：认证成功，设置令牌和状态');
               // 设置token到存储实例
               oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
               // 自动启用OneDrive存储
               setUseOneDriveStorage(true);
               // 更新React组件状态
               setIsAuthenticated(true);
-              console.log('页面初始化：认证成功，已设置OneDrive存储和认证状态');
-            } else {
-              console.log('页面初始化：认证状态API返回未认证或缺少令牌');
             }
-          } else {
-            console.log('页面初始化：认证状态API请求失败:', response.status);
           }
         } catch (error) {
-          console.error('页面初始化：检查认证状态失败:', error);
+          console.error('检查认证状态失败:', error);
         }
         
         // 移除URL参数避免重复触发
         const newUrl = window.location.pathname;
         window.history.replaceState({}, '', newUrl);
-        console.log('页面初始化：已移除URL参数');
       }
       
       let loadedLinks = getLinks();
@@ -213,30 +201,42 @@ export default function HomePage() {
       // 这样可以避免认证状态未同步完成时的错误判断
       if (useOneDriveStorage() && oneDriveStorage.isLoggedIn()) {
         try {
-          console.log('尝试从OneDrive同步数据...');
           const syncSuccess = await syncFromOneDrive();
           if (syncSuccess) {
             // 重新加载本地数据
             loadedLinks = getLinks();
             loadedSettings = getSettings();
-            console.log('从OneDrive同步数据成功');
           }
         } catch (error) {
           console.error('从OneDrive同步数据失败:', error);
           // 同步失败时不修改本地数据，保持现有数据
         }
       } else if (useOneDriveStorage() && !oneDriveStorage.isLoggedIn()) {
-        console.log('检测到启用了OneDrive存储但未登录，自动切换到本地存储');
         // 如果启用了OneDrive存储但未登录（没有token），自动切换到本地存储
         setUseOneDriveStorage(false);
       }
       
       // 确保links是数组
-      if (Array.isArray(loadedLinks)) {
-        setLinks(loadedLinks);
-      } else {
-        setLinks([]);
+      if (!Array.isArray(loadedLinks)) {
+        loadedLinks = [];
       }
+      
+      // 检查是否有热榜卡片，如果没有则添加
+      const hasHotBoard = loadedLinks.some(link => link.isHotBoard);
+      if (!hasHotBoard) {
+        const hotBoardLink: Link = {
+          id: 'zhihu-hot-board',
+          name: '知乎热榜',
+          url: '#',
+          icon: 'fa-fire',
+          category: '常用',
+          useFavicon: false,
+          isHotBoard: true
+        };
+        loadedLinks = [hotBoardLink, ...loadedLinks];
+      }
+      
+      setLinks(loadedLinks);
       
       // 确保settings不为null或undefined
       if (loadedSettings) {
@@ -325,8 +325,12 @@ export default function HomePage() {
     let newLinks: Link[];
     
     if (editingLink) {
-      // 编辑现有链接
-      newLinks = links.map(l => l.id === link.id ? link : l);
+      // 编辑现有链接（热榜卡片不允许编辑）
+      if (!link.isHotBoard) {
+        newLinks = links.map(l => l.id === link.id ? link : l);
+      } else {
+        newLinks = links;
+      }
     } else {
       // 添加新链接
       newLinks = [...links, link];
@@ -342,8 +346,10 @@ export default function HomePage() {
     setIsLinkFormOpen(true);
   };
 
-  // 删除链接
+  // 删除链接（热榜卡片不允许删除）
   const handleDeleteLink = (link: Link) => {
+    if (link.isHotBoard) return;
+    
     if (window.confirm(`确定要删除链接"${link.name}"吗？`)) {
       const newLinks = links.filter(l => l.id !== link.id);
       setLinks(newLinks);
@@ -355,6 +361,11 @@ export default function HomePage() {
   const handleLinksReorder = (newLinks: Link[]) => {
     setLinks(newLinks);
     saveLinks(newLinks);
+  };
+
+  // 切换知乎热榜对话框
+  const toggleZhihuHotBoard = () => {
+    setIsZhihuHotBoardOpen(!isZhihuHotBoardOpen);
   };
 
   // 切换搜索引擎
@@ -395,6 +406,7 @@ export default function HomePage() {
           onDeleteLink={handleDeleteLink}
           onAddLink={toggleLinkForm}
           onLinksReorder={handleLinksReorder}
+          onHotBoardClick={toggleZhihuHotBoard}
         />
       </main>
       
@@ -429,6 +441,12 @@ export default function HomePage() {
       <HelpDialog 
         isOpen={isHelpOpen}
         onClose={() => setIsHelpOpen(false)}
+      />
+      
+      {/* 知乎热榜对话框 */}
+      <ZhihuHotBoardDialog 
+        isOpen={isZhihuHotBoardOpen}
+        onClose={() => setIsZhihuHotBoardOpen(false)}
       />
     </div>
   );
