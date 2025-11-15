@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Weather from './Weather';
 
 interface HeaderProps {
   onToggleAddLink: () => void;
@@ -13,7 +14,7 @@ export default function Header({ onToggleAddLink, onToggleTheme, onToggleUnified
   return (
     <header className="bg-transparent text-white w-full py-4 px-6 md:px-12 flex justify-between items-center transition-all duration-300 z-50">
       <div className="flex items-center">
-        {/* 移除标题文字，保留空div用于布局 */}
+        <Weather />
       </div>
       <div className="flex items-center gap-4">
         <button 
