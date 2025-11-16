@@ -12,8 +12,12 @@ export async function GET() {
     
     const data = await response.json();
     
-    // 返回代理的数据
-    return NextResponse.json(data);
+    // 返回代理的数据，并设置缓存控制头
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      },
+    });
   } catch (error) {
     console.error('Error proxying zhihu hot data:', error);
     return NextResponse.json(

@@ -31,6 +31,7 @@ export default function ZhihuHotBoardDialog({ isOpen, onClose }: ZhihuHotBoardDi
       // 调用本地代理API获取知乎热榜数据
       const response = await fetch('/api/zhihu-hot', {
         method: 'GET',
+        cache: 'no-store' // 禁用缓存，确保每次都获取最新数据
       });
       
       if (!response.ok) {
@@ -66,12 +67,21 @@ export default function ZhihuHotBoardDialog({ isOpen, onClose }: ZhihuHotBoardDi
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
             <i className="fa fa-fire text-orange-500 mr-2"></i>知乎热榜
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-          >
-            <i className="fa fa-times text-lg"></i>
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={fetchHotBoardData}
+              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              title="刷新热榜"
+            >
+              <i className="fa fa-refresh"></i>
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+            >
+              <i className="fa fa-times text-lg"></i>
+            </button>
+          </div>
         </div>
         
         <div className="p-6 pt-4 overflow-y-auto flex-grow custom-scrollbar">

@@ -31,32 +31,34 @@ export default function LinksGrid({ links, layout, selectedCategory, onEditLink,
   const [isLoadingHotBoard, setIsLoadingHotBoard] = useState(false);
   
   // 加载热榜数据
-  useEffect(() => {
-    const fetchHotBoardData = async () => {
-      setIsLoadingHotBoard(true);
-      try {
-        const response = await fetch('/api/zhihu-hot');
-        if (response.ok) {
-          const data = await response.json();
-          // 只取前5条数据
-          const formattedData = data.list.slice(0, 5).map((item: any) => ({
-            title: item.title,
-            hot: item.hot_value,
-            url: item.url
-          }));
-          setHotBoardData(formattedData);
-        }
-      } catch (error) {
-        console.error('Failed to fetch hot board data:', error);
-      } finally {
-        setIsLoadingHotBoard(false);
+  const fetchHotBoardData = async () => {
+    setIsLoadingHotBoard(true);
+    try {
+      const response = await fetch('/api/zhihu-hot', {
+        cache: 'no-store' // 禁用缓存，确保每次都获取最新数据
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // 只取前5条数据
+        const formattedData = data.list.slice(0, 5).map((item: any) => ({
+          title: item.title,
+          hot: item.hot_value,
+          url: item.url
+        }));
+        setHotBoardData(formattedData);
       }
-    };
-    
+    } catch (error) {
+      console.error('Failed to fetch hot board data:', error);
+    } finally {
+      setIsLoadingHotBoard(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchHotBoardData();
     
     // 每十分钟自动更新一次
-    const interval = setInterval(fetchHotBoardData, 600000);
+    const interval = setInterval(fetchHotBoardData, 180000);
     return () => clearInterval(interval);
   }, []);
   
@@ -230,19 +232,21 @@ export default function LinksGrid({ links, layout, selectedCategory, onEditLink,
             >
               {link.isHotBoard ? (
                 <div className="flex flex-col h-full">
-                  <div 
-                    className="flex items-center gap-2 mb-3 cursor-pointer hover:text-orange-400 transition-colors"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (onHotBoardClick) {
-                        onHotBoardClick();
-                      }
-                    }}
-                  >
-                    <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
-                      <i className="fa fa-fire text-xl text-orange-500"></i>
+                  <div className="flex items-center justify-between mb-3">
+                    <div 
+                      className="flex items-center gap-2 cursor-pointer hover:text-orange-400 transition-colors"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (onHotBoardClick) {
+                          onHotBoardClick();
+                        }
+                      }}
+                    >
+                      <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                        <i className="fa fa-fire text-xl text-orange-500"></i>
+                      </div>
+                      <span className="font-medium truncate text-base">知乎热榜</span>
                     </div>
-                    <span className="font-medium truncate text-base">知乎热榜</span>
                   </div>
                   
                   <div className="space-y-2 mt-2 flex-grow">
