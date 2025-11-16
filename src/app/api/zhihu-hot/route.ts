@@ -1,6 +1,9 @@
 // 知乎热榜API代理路由
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET() {
   try {
     // 调用外部API获取知乎热榜数据
