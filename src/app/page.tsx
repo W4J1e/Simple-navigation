@@ -54,12 +54,16 @@ export default function HomePage() {
           setIsAuthenticated(true);
           
           // 如果启用了OneDrive存储并且认证状态发生了变化或首次认证成功，尝试同步数据
-          if (useOneDriveStorage() && (!wasAuthenticated || !wasInitializedRef.current)) {
-            await syncFromOneDrive();
-            // 重新加载数据
-            setLinks(getLinks());
-            setSettings(getSettings());
+        if (useOneDriveStorage() && (!wasAuthenticated || !wasInitializedRef.current)) {
+          await syncFromOneDrive();
+          // 重新加载数据
+          setLinks(getLinks());
+          // 仅当设置发生变化时才更新settings状态
+          const newSettings = getSettings();
+          if (JSON.stringify(newSettings) !== JSON.stringify(settings)) {
+            setSettings(newSettings);
           }
+        }
         } else {
           // 认证无效或已过期，清除状态
           oneDriveStorage.clearUserToken();
@@ -113,8 +117,7 @@ export default function HomePage() {
     // 设置CSS变量
     const root = document.documentElement;
     
-    // 清除之前的背景图和样式
-    body.style.backgroundImage = 'none';
+    // 设置基础背景样式（不清除背景图）
     body.style.backgroundSize = 'cover';
     body.style.backgroundPosition = 'center';
     body.style.backgroundAttachment = 'fixed';
