@@ -4,6 +4,7 @@ export async function GET() {
   try {
     // 尝试从多个源获取Bing图片
     const sources = [
+      'https://uapis.cn/api/v1/image/bing-daily',
       'https://api.yuafeng.cn/API/ly/bing/',
       'https://bing.img.run/rand.php',
       'https://api.btstu.cn/sjbz/api.php?format=json',

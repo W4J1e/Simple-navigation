@@ -62,8 +62,8 @@ export default function ZhihuHotBoardDialog({ isOpen, onClose }: ZhihuHotBoardDi
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 transition-opacity duration-300">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl mx-4 transform transition-transform duration-300 scale-100 max-h-[80vh] flex flex-col">
-        <div className="flex items-center justify-between p-6 pb-2 sticky top-0 bg-white dark:bg-gray-800 z-10 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-white/90 backdrop-blur-sm dark:bg-gray-800/90 rounded-lg shadow-xl w-full max-w-2xl mx-4 transform transition-transform duration-300 scale-100 max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 pb-2 sticky top-0 bg-white/90 backdrop-blur-sm dark:bg-gray-800/90 z-10 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
             <i className="fa fa-fire text-orange-500 mr-2"></i>知乎热榜
           </h2>
@@ -84,7 +84,7 @@ export default function ZhihuHotBoardDialog({ isOpen, onClose }: ZhihuHotBoardDi
           </div>
         </div>
         
-        <div className="p-6 pt-4 overflow-y-auto flex-grow custom-scrollbar">
+        <div className="p-6 pt-4 overflow-y-auto flex-grow custom-scrollbar bg-white/90 backdrop-blur-sm dark:bg-gray-800/90">
         
         <div className="space-y-4">
           {isLoading ? (

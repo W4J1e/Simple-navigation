@@ -44,39 +44,71 @@ export const getGradientBackground = (preset: string): string => {
 // 获取Bing每日一图
 export const getBingImage = async (): Promise<string> => {
   try {
-    const apiUrl = 'https://api.yuafeng.cn/API/ly/bing/';
-    
-    // 由于API直接返回图片，我们直接使用API URL作为图片URL
-    // 但需要验证API是否可用
-    const response = await fetch(apiUrl, {
-      method: 'HEAD', // 使用HEAD请求检查API可用性，避免CORS问题
-      mode: 'no-cors' // 使用no-cors模式避免CORS错误
+    // 首先尝试使用我们自己的API路由，这样可以避免CORS问题
+    const response = await fetch('/api/bing-image', {
+      cache: 'no-store' // 禁用缓存，确保每次都获取最新图片
     });
     
-    // 直接使用API URL作为图片URL
-    return apiUrl;
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.imageUrl) {
+        return data.imageUrl;
+      }
+    }
+    
+    // 如果我们自己的API失败，尝试直接使用备选API
+    const alternativeApis = [
+      'https://api.yuafeng.cn/API/ly/bing/',
+      'https://bing.img.run/rand.php'
+    ];
+    
+    for (const apiUrl of alternativeApis) {
+      try {
+        // 直接返回API URL，让浏览器处理图片加载
+        return apiUrl;
+      } catch (error) {
+        console.error(`尝试API ${apiUrl} 失败:`, error);
+        // 继续尝试下一个API
+        continue;
+      }
+    }
     
   } catch (error) {
     console.error('获取Bing图片失败:', error);
-    
-    // 如果直接API失败，尝试使用备选方案
-    try {
-      // 备选API1：返回JSON数据的API
-      const fallbackResponse = await fetch('https://bing.biturl.top/');
-      if (fallbackResponse.ok) {
-        const fallbackData = await fallbackResponse.json();
-        if (fallbackData.url) {
-          return fallbackData.url;
-        }
-      }
-    } catch (fallbackError) {
-      console.error('备选API也失败:', fallbackError);
-    }
-    
-    // 如果所有API都失败，使用默认图片
-    const defaultUrl = 'https://picsum.photos/1920/1080?random=1';
-    return defaultUrl;
   }
+  
+  // 如果所有API都失败，使用默认图片
+  const defaultUrl = 'https://picsum.photos/1920/1080?random=1';
+  return defaultUrl;
+};
+
+// 预加载图片
+export const preloadImage = (url: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous'; // 启用CORS支持
+    
+    img.onload = () => {
+      resolve(url);
+    };
+    
+    img.onerror = () => {
+      reject(new Error(`图片加载失败: ${url}`));
+    };
+    
+    // 为图片加载设置超时
+    const timeout = setTimeout(() => {
+      reject(new Error(`图片加载超时: ${url}`));
+    }, 10000); // 10秒超时
+    
+    img.src = url;
+    
+    // 清除超时
+    img.onload = () => {
+      clearTimeout(timeout);
+      resolve(url);
+    };
+  });
 };
 
 // 格式化时间

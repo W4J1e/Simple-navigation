@@ -91,6 +91,16 @@ export default function HomePage() {
     return () => clearInterval(intervalId);
   }, []);
 
+  // 预加载图片函数
+  const preloadImage = (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(url);
+      img.onerror = reject;
+      img.src = url;
+    });
+  };
+
   // 应用背景设置
   const applyBackground = async (settings: Settings) => {
     // 确保在客户端执行
@@ -103,6 +113,13 @@ export default function HomePage() {
     // 设置CSS变量
     const root = document.documentElement;
     
+    // 清除之前的背景图和样式
+    body.style.backgroundImage = 'none';
+    body.style.backgroundSize = 'cover';
+    body.style.backgroundPosition = 'center';
+    body.style.backgroundAttachment = 'fixed';
+    body.style.backgroundRepeat = 'no-repeat';
+    
     // 根据背景类型设置不同的CSS变量
     if (settings.bgType === 'color') {
       root.style.setProperty('--bg-image', 'none');
@@ -111,11 +128,24 @@ export default function HomePage() {
       body.style.backgroundImage = 'none';
       body.style.backgroundColor = settings.bgColor;
     } else if (settings.bgType === 'image' && settings.bgImageUrl) {
-      root.style.setProperty('--bg-image', `url(${settings.bgImageUrl})`);
-      root.style.setProperty('--bg-color', 'transparent');
-      // 直接设置body背景
-      body.style.backgroundImage = `url(${settings.bgImageUrl})`;
-      body.style.backgroundColor = 'transparent';
+      try {
+        // 预加载图片
+        await preloadImage(settings.bgImageUrl);
+        
+        root.style.setProperty('--bg-image', `url(${settings.bgImageUrl})`);
+        root.style.setProperty('--bg-color', 'transparent');
+        // 直接设置body背景
+        body.style.backgroundImage = `url(${settings.bgImageUrl})`;
+        body.style.backgroundColor = 'transparent';
+      } catch (error) {
+        console.error('加载图片失败:', error);
+        // 使用默认图片
+        const defaultUrl = 'https://picsum.photos/1920/1080?random=1';
+        root.style.setProperty('--bg-image', `url(${defaultUrl})`);
+        root.style.setProperty('--bg-color', 'transparent');
+        body.style.backgroundImage = `url(${defaultUrl})`;
+        body.style.backgroundColor = 'transparent';
+      }
     } else if (settings.bgType === 'gradient') {
       const gradient = getGradientBackground(settings.gradientPreset);
       root.style.setProperty('--bg-image', gradient);
@@ -124,17 +154,31 @@ export default function HomePage() {
       body.style.backgroundImage = gradient;
       body.style.backgroundColor = 'transparent';
     } else if (settings.bgType === 'upload' && settings.bgUploadUrl) {
-      root.style.setProperty('--bg-image', `url(${settings.bgUploadUrl})`);
-      root.style.setProperty('--bg-color', 'transparent');
-      // 直接设置body背景
-      body.style.backgroundImage = `url(${settings.bgUploadUrl})`;
-      body.style.backgroundColor = 'transparent';
+      try {
+        // 预加载上传的图片
+        await preloadImage(settings.bgUploadUrl);
+        
+        root.style.setProperty('--bg-image', `url(${settings.bgUploadUrl})`);
+        root.style.setProperty('--bg-color', 'transparent');
+        // 直接设置body背景
+        body.style.backgroundImage = `url(${settings.bgUploadUrl})`;
+        body.style.backgroundColor = 'transparent';
+      } catch (error) {
+        console.error('加载上传图片失败:', error);
+        // 使用默认图片
+        const defaultUrl = 'https://picsum.photos/1920/1080?random=1';
+        root.style.setProperty('--bg-image', `url(${defaultUrl})`);
+        root.style.setProperty('--bg-color', 'transparent');
+        body.style.backgroundImage = `url(${defaultUrl})`;
+        body.style.backgroundColor = 'transparent';
+      }
     } else if (settings.bgType === 'bing') {
       try {
         const imageUrl = await getBingImage();
         if (imageUrl) {
-          // 直接设置背景，不进行图片预加载（避免CORS问题）
-          // 由于API直接返回图片，浏览器会自动处理图片加载
+          // 预加载Bing图片
+          await preloadImage(imageUrl);
+          
           root.style.setProperty('--bg-image', `url(${imageUrl})`);
           root.style.setProperty('--bg-color', 'transparent');
           // 直接设置body背景
