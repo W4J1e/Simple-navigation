@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
 
-// 强制该路由为动态，每次请求都获取最新图片
-export const dynamic = 'force-dynamic';
-
 export async function GET() {
   try {
     // 尝试从多个源获取Bing图片
