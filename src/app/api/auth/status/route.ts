@@ -51,26 +51,44 @@ export async function GET(request: NextRequest) {
     let accessToken = user.accessToken;
     let refreshToken = user.refreshToken;
     let tokenRefreshed = false;
+    let refreshedTokensResult = null; // 用于保存refreshAccessToken的返回结果
     const now = Math.floor(Date.now() / 1000);
     
-    // 检查token是否接近过期（剩余时间少于10分钟）
+    // 检查token是否已过期或接近过期（优先检查过期情况）
     if (user.accessTokenExpiresAt) {
       const timeRemaining = user.accessTokenExpiresAt - now;
       console.log(`当前token剩余有效时间: ${Math.floor(timeRemaining / 60)} 分钟`);
       
-      // 如果token剩余时间少于10分钟，主动刷新
-      if (timeRemaining < 600) { // 600秒 = 10分钟
-        console.log('Token接近过期，主动刷新...');
+      // 如果token已过期或剩余时间少于10分钟，主动刷新
+      // 这样即使长时间不活动后再次打开页面，也能正确刷新令牌
+      if (timeRemaining <= 0 || timeRemaining < 600) { // 600秒 = 10分钟
+        console.log(timeRemaining <= 0 ? 'Token已过期，需要刷新...' : 'Token接近过期，主动刷新...');
         if (user.refreshToken) {
           try {
-            const refreshedTokens = await refreshAccessToken(user.refreshToken);
-            accessToken = refreshedTokens.accessToken;
-            refreshToken = refreshedTokens.refreshToken;
+            refreshedTokensResult = await refreshAccessToken(user.refreshToken);
+            accessToken = refreshedTokensResult.accessToken;
+            refreshToken = refreshedTokensResult.refreshToken;
             tokenRefreshed = true;
+            console.log('令牌刷新成功');
           } catch (refreshError) {
             console.error('主动刷新令牌失败:', refreshError);
             // 继续使用原token，后面会通过API调用验证是否还可用
           }
+        }
+      }
+    } else {
+      // 如果没有accessTokenExpiresAt字段，这可能是旧的JWT
+      // 为了安全起见，尝试刷新令牌
+      if (user.refreshToken) {
+        console.log('未找到accessTokenExpiresAt字段，尝试刷新令牌以确保安全...');
+        try {
+          refreshedTokensResult = await refreshAccessToken(user.refreshToken);
+          accessToken = refreshedTokensResult.accessToken;
+          refreshToken = refreshedTokensResult.refreshToken;
+          tokenRefreshed = true;
+          console.log('令牌刷新成功');
+        } catch (refreshError) {
+          console.error('刷新令牌失败:', refreshError);
         }
       }
     }
@@ -86,9 +104,9 @@ export async function GET(request: NextRequest) {
         // 访问令牌可能已过期，尝试使用刷新令牌获取新令牌
         if (user.refreshToken) {
           try {
-            const refreshedTokens = await refreshAccessToken(user.refreshToken);
-            accessToken = refreshedTokens.accessToken;
-            refreshToken = refreshedTokens.refreshToken;
+            refreshedTokensResult = await refreshAccessToken(user.refreshToken);
+            accessToken = refreshedTokensResult.accessToken;
+            refreshToken = refreshedTokensResult.refreshToken;
             tokenRefreshed = true;
           } catch (refreshError) {
             console.error('刷新令牌失败:', refreshError);
@@ -105,15 +123,16 @@ export async function GET(request: NextRequest) {
     // 如果令牌已刷新，更新JWT令牌
     let updatedUser = user;
     if (tokenRefreshed) {
-      // 获取刷新令牌时返回的expiresIn值（通常为3600秒）
-      const expiresIn = 3600; // Microsoft Graph API的accessToken默认过期时间为1小时
+      // 使用refreshAccessToken返回的实际expiresIn值，而不是硬编码值
+      // 确保accessToken过期时间计算准确
       
       // 更新用户信息中的令牌
       updatedUser = {
         ...user,
         accessToken,
         refreshToken,
-        expiresIn // 传递expiresIn参数，用于计算accessToken过期时间
+        // 使用统一保存的refreshAccessToken返回结果中的expiresIn值
+        expiresIn: refreshedTokensResult?.expiresIn || 3600 // 保留默认值作为安全网
       };
       
       // 创建新的JWT令牌，包含expiresIn

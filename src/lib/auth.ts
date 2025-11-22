@@ -222,15 +222,23 @@ export const validateToken = async (token: string) => {
     
     // 尝试解码令牌（不验证签名，仅检查结构）
     try {
-      const decoded = jwt.decode(token) as { exp?: number };
+      const decoded = jwt.decode(token) as { 
+        exp?: number, 
+        accessTokenExpiresAt?: number 
+      };
       
-      // 检查令牌是否已过期
+      // 检查JWT令牌是否已过期
       if (decoded?.exp) {
         const now = Math.floor(Date.now() / 1000);
         if (decoded.exp < now) {
+          console.log('JWT令牌已过期');
           return false;
         }
       }
+      
+      // 注意：validateToken函数只检查JWT本身的有效性
+      // accessToken的过期检查和刷新应该在status API中进行
+      // 这样可以确保即使accessToken过期，也能使用refreshToken进行刷新
     } catch (decodeError) {
       return false;
     }
