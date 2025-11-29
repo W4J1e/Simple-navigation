@@ -1,8 +1,9 @@
+main:
+  push:
+    - stages:
     - name: 同步 Github 仓库
-      stages:
-        - name: 同步 Github 仓库
-          imports: 
-            - https://cnb.cool/hin/env/-/blob/main/cnb2github.yml
-          script: |
-            git remote add github https://x-access-token:$GITHUB_TOKEN@github.com/W4J1e/SimpleNav
-            git push github main --force              
+      imports: 
+        - https://cnb.cool/hin/env/-/blob/main/cnb2github.yml
+      script: |
+        git remote add github https://x-access-token:$GITHUB_TOKEN@github.com/W4J1e/SimpleNav
+        git push github master --force              
