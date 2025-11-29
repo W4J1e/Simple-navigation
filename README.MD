@@ -1,15 +1,20 @@
 # SimpleNav
 
-由于其它的导航页多少有些使用上的不便，要么功能缺失，要么功能丰富但卡顿等等。所以我借助 AI 写了一个基于 Next.js 构建的个人导航页面，具有美观的界面和一定的自定义功能。
+由于其它的导航页多少有些使用上的不便，要么功能缺失，要么功能丰富但卡顿等等。
+
+所以我借助 AI 写了一个基于 Next.js 构建的个人导航页面，具有美观的界面和较丰富的自定义功能。
 
 ## 界面预览
 
 ![主页](./statics/main.jpg)
 
-![设置页](./statics/settings.jpg)
+![夜间模式](./statics/darkmode.jpg)
+
+![知乎热榜](./statics/zhihu_hot.jpg)
 
 ![电影日历](./statics/moviecard.jpg)
 
+![设置页](./statics/settings.jpg)
 
 ## 功能特点
 
@@ -143,13 +148,10 @@ AZURE_REDIRECT_URI=http://localhost:3000/api/auth/callback  # 开发环境
 
 # JWT 密钥
 JWT_SECRET=your_jwt_secret_key
+
+# 心知天气API配置
+NEXT_PUBLIC_SENIVERSE_API_KEY=your_seniverse_api_key
 ```
-
-### 生产环境部署
-
-1. 在 GitHub 仓库中设置环境变量
-2. 在 Azure 应用注册中添加生产环境的重定向 URI
-3. 连接到 EdgeOne Pages 并配置构建设置
 
 ## 贡献
 
