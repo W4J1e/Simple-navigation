@@ -1,4 +1,4 @@
-main:
+master:
   push:
     - stages:
     - name: 同步 Github 仓库
