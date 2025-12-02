@@ -11,7 +11,7 @@ import AboutDialog from '@/components/AboutDialog';
 import HelpDialog from '@/components/HelpDialog';
 import ZhihuHotBoardDialog from '@/components/ZhihuHotBoardDialog';
 import { Link, Settings } from '@/types';
-import { getLinks, saveLinks, getSettings, saveSettings, useOneDriveStorage, setUseOneDriveStorage, syncFromOneDrive, defaultSettings } from '@/lib/storage';
+import { getLinks, saveLinks, getSettings, saveSettings, useOneDriveStorage, setUseOneDriveStorage, syncFromOneDrive, syncData, defaultSettings } from '@/lib/storage';
 import { oneDriveStorage } from '@/lib/onedrive-storage';
 
 import { getGradientBackground, getBingImage } from '@/lib/utils';
@@ -54,12 +54,12 @@ export default function HomePage() {
           oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
           setIsAuthenticated(true);
           
-          // 如果启用了OneDrive存储并且认证状态发生了变化或首次认证成功，尝试同步数据
+          // 无论是否启用OneDrive存储，只要认证成功，就执行双向同步
           // 但不等待同步完成，在后台进行
-          if (useOneDriveStorage() && (!wasAuthenticated || !wasInitializedRef.current)) {
-            // 在后台同步OneDrive数据，不阻塞页面渲染
-            syncFromOneDrive().then(success => {
-              if (success) {
+          if (!wasAuthenticated || !wasInitializedRef.current) {
+            // 在后台执行双向同步，不阻塞页面渲染
+            syncData().then(hasChanges => {
+              if (hasChanges) {
                 // 同步成功后更新页面数据
                 setLinks(getLinks());
                 // 仅当设置发生变化时才更新settings状态
@@ -230,8 +230,6 @@ export default function HomePage() {
             if (data.authenticated && data.accessToken && data.refreshToken) {
               // 设置token到存储实例
               oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
-              // 自动启用OneDrive存储
-              setUseOneDriveStorage(true);
               // 更新React组件状态
               setIsAuthenticated(true);
             }
@@ -245,29 +243,9 @@ export default function HomePage() {
         window.history.replaceState({}, '', newUrl);
       }
       
+      // 1. 首先使用本地存储加载数据
       let loadedLinks = getLinks();
       let loadedSettings = getSettings();
-      
-      // 优化同步触发条件：
-      // 1. 只有在使用OneDrive存储
-      // 2. oneDriveStorage.isLoggedIn()返回true（表明有token）
-      // 这样可以避免认证状态未同步完成时的错误判断
-      if (useOneDriveStorage() && oneDriveStorage.isLoggedIn()) {
-        try {
-          const syncSuccess = await syncFromOneDrive();
-          if (syncSuccess) {
-            // 重新加载本地数据
-            loadedLinks = getLinks();
-            loadedSettings = getSettings();
-          }
-        } catch (error) {
-          console.error('从OneDrive同步数据失败:', error);
-          // 同步失败时不修改本地数据，保持现有数据
-        }
-      } else if (useOneDriveStorage() && !oneDriveStorage.isLoggedIn()) {
-        // 如果启用了OneDrive存储但未登录（没有token），自动切换到本地存储
-        setUseOneDriveStorage(false);
-      }
       
       // 确保links是数组
       if (!Array.isArray(loadedLinks)) {
@@ -320,6 +298,7 @@ export default function HomePage() {
         loadedLinks = [movieCalendarLink, ...loadedLinks];
       }
       
+      // 2. 立即设置本地数据到组件状态，确保页面快速加载
       setLinks(loadedLinks);
       
       // 确保settings不为null或undefined
@@ -329,6 +308,10 @@ export default function HomePage() {
         // 使用默认设置
         setSettings(defaultSettings);
       }
+      
+      // 3. 在后台检测和同步云端数据
+      // 这里暂时不执行后台同步，因为认证状态检查可能还没有完成
+      // 后台同步会在认证状态检查完成后执行
     };
     
     initializeData();

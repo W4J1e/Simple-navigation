@@ -240,8 +240,6 @@ export default function LinksGrid({
 
   useEffect(() => {
     fetchHotBoardData();
-    const interval = setInterval(fetchHotBoardData, 180000);
-    return () => clearInterval(interval);
   }, []);
 
   const closeContextMenu = () => {

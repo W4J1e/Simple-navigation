@@ -24,6 +24,11 @@ export interface Settings {
   autoRefresh: boolean;
 }
 
+// 带时间戳的数据结构
+export interface DataWithTimestamp {
+  lastModified: number;
+}
+
 export interface TodoItem {
   id: string;
   content: string;
