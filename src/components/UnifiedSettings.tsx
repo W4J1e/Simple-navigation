@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useOneDriveStorage, setUseOneDriveStorage, syncFromOneDrive, syncToOneDrive } from '@/lib/storage';
+import { syncFromOneDrive, syncToOneDrive } from '@/lib/storage';
 import { oneDriveStorage } from '@/lib/onedrive-storage';
 import { Link, Settings } from '@/types';
 import { getLinks, saveLinks, getSettings, saveSettings } from '@/lib/storage';
@@ -16,7 +16,6 @@ interface UnifiedSettingsProps {
 
 export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSettingsChange }: UnifiedSettingsProps) {
   const [activeTab, setActiveTab] = useState<'storage' | 'data' | 'background'>('storage');
-  const [useOneDrive, setUseOneDrive] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -106,10 +105,6 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
     if (!isOpen) return;
     
     const checkAuthStatus = async () => {
-      // 检查当前存储设置
-      const currentStorageSetting = useOneDriveStorage();
-      setUseOneDrive(currentStorageSetting);
-      
       // 检查URL参数中的认证状态
       const urlParams = new URLSearchParams(window.location.search);
       const authParam = urlParams.get('auth');
@@ -127,7 +122,6 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
             if (data.authenticated && data.accessToken && data.refreshToken) {
               oneDriveStorage.setUserToken(data.accessToken, data.refreshToken);
               setIsAuthenticated(true);
-              setUseOneDriveStorage(true);
               // 保存用户信息
               if (data.user) {
                 setUserInfo(data.user);
@@ -172,29 +166,16 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
               // 服务器返回未认证，清除本地登录状态
               setIsAuthenticated(false);
               setUserInfo(null);
-              // 如果当前设置为使用OneDrive但未认证，自动切换到本地存储
-              if (useOneDrive) {
-                setUseOneDrive(false);
-                setUseOneDriveStorage(false);
-              }
             }
           } else {
             // 请求失败，默认为未认证状态
             setIsAuthenticated(false);
             setUserInfo(null);
-            if (useOneDrive) {
-              setUseOneDrive(false);
-              setUseOneDriveStorage(false);
-            }
           }
         } catch (error) {
           // 出错时也默认为未认证状态
           setIsAuthenticated(false);
           setUserInfo(null);
-          if (useOneDrive) {
-            setUseOneDrive(false);
-            setUseOneDriveStorage(false);
-          }
         }
       }
       
@@ -207,27 +188,6 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
     
     checkAuthStatus();
   }, [isOpen]); // 只有当设置面板打开时才运行
-
-  const handleToggleStorage = async () => {
-    const newUseOneDrive = !useOneDrive;
-    
-    if (newUseOneDrive && !isAuthenticated) {
-      setSyncStatus('请先登录OneDrive');
-      setTimeout(() => setSyncStatus(null), 3000);
-      return;
-    }
-    
-    setUseOneDrive(newUseOneDrive);
-    setUseOneDriveStorage(newUseOneDrive);
-    
-    if (newUseOneDrive) {
-      // 切换到OneDrive存储，尝试同步数据
-      await handleSyncFromOneDrive();
-    } else {
-      setSyncStatus('已切换到本地存储');
-      setTimeout(() => setSyncStatus(null), 3000);
-    }
-  };
 
   const handleSyncFromOneDrive = async () => {
     if (!isAuthenticated) {
@@ -290,8 +250,6 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
       try {
         await oneDriveStorage.logout();
         setIsAuthenticated(false);
-        setUseOneDrive(false);
-        setUseOneDriveStorage(false);
         setUserInfo(null);
         setSyncStatus('已退出OneDrive登录');
         setTimeout(() => setSyncStatus(null), 3000);
@@ -425,7 +383,7 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
         }
       } catch (error) {
         // 使用默认图片
-        const defaultUrl = 'https://picsum.photos/1920/1080?random=1';
+        const defaultUrl = 'https://cdn2.hin.cool/pic/bg/lg3.jpg';
         root.style.setProperty('--bg-image', `url(${defaultUrl})`);
         root.style.setProperty('--bg-color', 'transparent');
         body.style.backgroundImage = `url(${defaultUrl})`;
@@ -535,22 +493,6 @@ export default function UnifiedSettings({ isOpen, onClose, onLinksChange, onSett
                             退出登录
                           </button>
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">使用 OneDrive 存储</span>
-                        <button
-                          onClick={handleToggleStorage}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            useOneDrive ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
-                          }`}
-                        >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              useOneDrive ? 'translate-x-6' : 'translate-x-1'
-                            }`}
-                          />
-                        </button>
                       </div>
                       
                       <div className="flex space-x-2">

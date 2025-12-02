@@ -90,7 +90,7 @@ export const getBingImage = async (): Promise<string> => {
   }
   
   // 如果所有API都失败，使用默认图片
-  const defaultUrl = 'https://picsum.photos/1920/1080?random=1';
+  const defaultUrl = 'https://cdn2.hin.cool/pic/bg/lg3.jpg';
   return defaultUrl;
 };
 

@@ -249,21 +249,13 @@ export async function syncData(): Promise<boolean> {
   // 先验证登录状态和令牌有效性
   const { oneDriveStorage } = await import('./onedrive-storage');
   if (!oneDriveStorage.isLoggedIn()) {
-    console.log('syncData: 未登录，返回false');
     return false;
   }
   
   try {
-    console.log('syncData: 开始获取云端数据');
     // 获取云端数据
-    const cloudSettings = await oneDriveStorage.getSettings();
-    const cloudLinks = await oneDriveStorage.getLinks();
-    
-    console.log('syncData: 获取云端数据完成', {
-      hasCloudSettings: !!cloudSettings,
-      hasCloudLinks: !!cloudLinks,
-      cloudLinksLength: cloudLinks?.length || 0
-    });
+    const cloudSettingsResult = await oneDriveStorage.getSettings();
+    const cloudLinksResult = await oneDriveStorage.getLinks();
     
     // 获取本地数据和时间戳
     const localSettings = getSettings();
@@ -271,102 +263,58 @@ export async function syncData(): Promise<boolean> {
     const localSettingsTimestamp = getSettingsTimestamp();
     const localLinksTimestamp = getLinksTimestamp();
     
-    console.log('syncData: 本地数据', {
-      localSettingsTimestamp,
-      localLinksTimestamp,
-      localLinksLength: localLinks.length
-    });
-    
     let hasChanges = false;
     
-    // 检查云端数据是否是带时间戳的格式
-    let actualCloudSettings = cloudSettings;
-    let actualCloudSettingsTimestamp = 0;
-    
-    let actualCloudLinks = cloudLinks;
-    let actualCloudLinksTimestamp = 0;
-    
-    // 检查云端设置是否是带时间戳的格式
-    if (cloudSettings && typeof cloudSettings === 'object') {
-      if ('data' in cloudSettings && 'lastModified' in cloudSettings) {
+    // 处理云端设置
+    if (cloudSettingsResult && typeof cloudSettingsResult === 'object') {
+      // 检查云端设置是否是带时间戳的格式
+      if ('data' in cloudSettingsResult && 'lastModified' in cloudSettingsResult) {
         // 云端数据是带时间戳的格式
-        actualCloudSettings = cloudSettings.data;
-        actualCloudSettingsTimestamp = cloudSettings.lastModified || 0;
+        const cloudSettings = cloudSettingsResult.data as Settings;
+        const cloudSettingsTimestamp = cloudSettingsResult.lastModified as number || 0;
+        
+        // 比较时间戳
+        if (cloudSettingsTimestamp > localSettingsTimestamp) {
+          // 云端设置较新，同步到本地
+          saveSettings(cloudSettings);
+          hasChanges = true;
+        } else if (localSettingsTimestamp > cloudSettingsTimestamp) {
+          // 本地设置较新，同步到云端
+          await oneDriveStorage.saveSettings(localSettings);
+          hasChanges = true;
+        }
       } else {
-        // 云端数据是旧格式，没有时间戳，使用当前时间
-        actualCloudSettingsTimestamp = Date.now();
+        // 云端数据是旧格式，没有时间戳，直接同步到本地
+        saveSettings(cloudSettingsResult as Settings);
+        hasChanges = true;
       }
     }
     
-    // 检查云端链接是否是带时间戳的格式
-    if (Array.isArray(cloudLinks)) {
-      // 旧格式，没有时间戳，使用当前时间
-      actualCloudLinksTimestamp = Date.now();
-    } else if (cloudLinks && typeof cloudLinks === 'object' && 'data' in cloudLinks && 'lastModified' in cloudLinks) {
-      // 云端数据是带时间戳的格式
-      actualCloudLinks = cloudLinks.data;
-      actualCloudLinksTimestamp = cloudLinks.lastModified || 0;
-    }
-    
-    console.log('syncData: 实际云端数据', {
-      actualCloudSettingsTimestamp,
-      actualCloudLinksTimestamp,
-      hasActualCloudSettings: !!actualCloudSettings,
-      hasActualCloudLinks: !!actualCloudLinks,
-      actualCloudLinksLength: actualCloudLinks?.length || 0
-    });
-    
-    // 比较设置
-    if (actualCloudSettings && Object.keys(actualCloudSettings).length > 0) {
-      console.log('syncData: 比较设置，本地时间戳:', localSettingsTimestamp, '，云端时间戳:', actualCloudSettingsTimestamp);
-      if (actualCloudSettingsTimestamp > localSettingsTimestamp) {
-        // 云端设置较新，同步到本地
-        console.log('syncData: 云端设置较新，同步到本地');
-        saveSettings(actualCloudSettings);
+    // 处理云端链接
+    if (cloudLinksResult && typeof cloudLinksResult === 'object') {
+      // 检查云端链接是否是带时间戳的格式
+      if ('data' in cloudLinksResult && 'lastModified' in cloudLinksResult) {
+        // 云端数据是带时间戳的格式
+        const cloudLinks = cloudLinksResult.data as Link[];
+        const cloudLinksTimestamp = cloudLinksResult.lastModified as number || 0;
+        
+        // 比较时间戳
+        if (cloudLinksTimestamp > localLinksTimestamp) {
+          // 云端链接较新，同步到本地
+          saveLinks(cloudLinks);
+          hasChanges = true;
+        } else if (localLinksTimestamp > cloudLinksTimestamp) {
+          // 本地链接较新，同步到云端
+          await oneDriveStorage.saveLinks(localLinks);
+          hasChanges = true;
+        }
+      } else if (Array.isArray(cloudLinksResult)) {
+        // 云端数据是旧格式，没有时间戳，直接同步到本地
+        saveLinks(cloudLinksResult);
         hasChanges = true;
-      } else if (localSettingsTimestamp > actualCloudSettingsTimestamp) {
-        // 本地设置较新，同步到云端
-        console.log('syncData: 本地设置较新，同步到云端');
-        await oneDriveStorage.saveSettings({
-          data: localSettings,
-          lastModified: localSettingsTimestamp
-        });
-        hasChanges = true;
-      } else {
-        console.log('syncData: 设置无变化');
       }
     }
     
-    // 比较链接
-    if (Array.isArray(actualCloudLinks) && actualCloudLinks.length > 0) {
-      console.log('syncData: 比较链接，本地时间戳:', localLinksTimestamp, '，云端时间戳:', actualCloudLinksTimestamp);
-      if (actualCloudLinksTimestamp > localLinksTimestamp) {
-        // 云端链接较新，同步到本地
-        console.log('syncData: 云端链接较新，同步到本地');
-        saveLinks(actualCloudLinks);
-        hasChanges = true;
-      } else if (localLinksTimestamp > actualCloudLinksTimestamp) {
-        // 本地链接较新，同步到云端
-        console.log('syncData: 本地链接较新，同步到云端');
-        await oneDriveStorage.saveLinks({
-          data: localLinks,
-          lastModified: localLinksTimestamp
-        });
-        hasChanges = true;
-      } else {
-        console.log('syncData: 链接无变化');
-      }
-    } else if (localLinks.length > 0) {
-      // 云端没有链接，本地有，同步到云端
-      console.log('syncData: 云端没有链接，本地有，同步到云端');
-      await oneDriveStorage.saveLinks({
-        data: localLinks,
-        lastModified: localLinksTimestamp
-      });
-      hasChanges = true;
-    }
-    
-    console.log('syncData: 同步完成，是否有变化:', hasChanges);
     return hasChanges;
   } catch (error) {
     // 记录错误但不抛出，避免影响用户体验

@@ -30,9 +30,10 @@ export default function HomePage() {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isZhihuHotBoardOpen, setIsZhihuHotBoardOpen] = useState(false);
+  const [showAuthExpiredToast, setShowAuthExpiredToast] = useState(false);
 
   
-  // 页面加载时立即检查认证状态
+  // 页面加载时立即检查认证状态，只检查一次
   useEffect(() => {
     const checkInitialAuthStatus = async () => {
       try {
@@ -73,12 +74,19 @@ export default function HomePage() {
         } else {
           // 认证无效或已过期，清除状态
           oneDriveStorage.clearUserToken();
-          setIsAuthenticated(false);
           
-          // 如果之前是认证状态，需要重置OneDrive存储设置
-          if (wasAuthenticated) {
+          // 如果之前是认证状态，或者首次打开网页没有登录，显示提示
+          if (wasAuthenticated || !wasInitializedRef.current) {
             setUseOneDriveStorage(false);
+            // 显示登录失效提示
+            setShowAuthExpiredToast(true);
+            // 3秒后自动关闭提示
+            setTimeout(() => {
+              setShowAuthExpiredToast(false);
+            }, 3000);
           }
+          
+          setIsAuthenticated(false);
         }
       } catch (error) {
         console.error('检查认证状态失败:', error);
@@ -95,10 +103,7 @@ export default function HomePage() {
       wasInitializedRef.current = true;
     });
     
-    // 设置定期检查（每60秒）
-    const intervalId = setInterval(checkInitialAuthStatus, 60000);
-    
-    return () => clearInterval(intervalId);
+    // 移除定期检查，只在首次打开网页时检查一次
   }, [settings]);
 
   // 预加载图片函数
@@ -149,7 +154,7 @@ export default function HomePage() {
       } catch (error) {
         console.error('加载图片失败:', error);
         // 使用默认图片
-        const defaultUrl = 'https://picsum.photos/1920/1080?random=1';
+        const defaultUrl = 'https://cdn2.hin.cool/pic/bg/lg3.jpg';
         root.style.setProperty('--bg-image', `url(${defaultUrl})`);
         root.style.setProperty('--bg-color', 'transparent');
         body.style.backgroundImage = `url(${defaultUrl})`;
@@ -175,7 +180,7 @@ export default function HomePage() {
       } catch (error) {
         console.error('加载上传图片失败:', error);
         // 使用默认图片
-        const defaultUrl = 'https://picsum.photos/1920/1080?random=1';
+        const defaultUrl = 'https://cdn2.hin.cool/pic/bg/lg3.jpg';
         root.style.setProperty('--bg-image', `url(${defaultUrl})`);
         root.style.setProperty('--bg-color', 'transparent');
         body.style.backgroundImage = `url(${defaultUrl})`;
@@ -198,7 +203,7 @@ export default function HomePage() {
         }
       } catch (error) {
         // 使用默认图片
-        const defaultUrl = 'https://picsum.photos/1920/1080?random=1';
+        const defaultUrl = 'https://cdn2.hin.cool/pic/bg/lg3.jpg';
         root.style.setProperty('--bg-image', `url(${defaultUrl})`);
         root.style.setProperty('--bg-color', 'transparent');
         body.style.backgroundImage = `url(${defaultUrl})`;
@@ -520,7 +525,21 @@ export default function HomePage() {
         onClose={() => setIsZhihuHotBoardOpen(false)}
       />
       
-
+      {/* 登录失效提示 */}
+      {showAuthExpiredToast && (
+        <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in-out">
+          <div className="flex items-center gap-2">
+            <i className="fas fa-exclamation-circle"></i>
+            <span>未登陆或登陆已失效，请重新登陆</span>
+            <button 
+              onClick={() => setShowAuthExpiredToast(false)}
+              className="ml-2 text-white hover:text-gray-200"
+            >
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

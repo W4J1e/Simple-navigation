@@ -4,6 +4,7 @@ export async function GET() {
   try {
     // 尝试从多个源获取Bing图片
     const sources = [
+      'https://bing.img.run/1920x1080.php',
       'https://api.yuafeng.cn/API/ly/bing/',
       'https://uapis.cn/api/v1/image/bing-daily',
       'https://bing.img.run/rand.php'
@@ -82,14 +83,14 @@ export async function GET() {
     return NextResponse.json({ 
       success: false, 
       error: '所有图片源都不可用',
-      imageUrl: 'https://picsum.photos/1920/1080?random=1'
+      imageUrl: 'https://cdn2.hin.cool/pic/bg/lg3.jpg'
     });
   } catch (error) {
     console.error('获取Bing图片失败:', error);
     return NextResponse.json({ 
       success: false, 
       error: '服务器错误',
-      imageUrl: 'https://picsum.photos/1920/1080?random=1'
+      imageUrl: 'https://cdn2.hin.cool/pic/bg/lg3.jpg'
     });
   }
 }

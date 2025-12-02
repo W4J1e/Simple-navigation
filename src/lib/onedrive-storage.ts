@@ -58,8 +58,6 @@ export class OneDriveStorage {
   // 验证并刷新令牌
   async validateAndRefreshToken(): Promise<boolean> {
     try {
-      console.log('开始验证并刷新令牌...');
-      
       // 调用status API验证和刷新令牌，无论本地是否有token
       const response = await fetch('/api/auth/status', {
         method: 'GET',
@@ -72,23 +70,18 @@ export class OneDriveStorage {
 
       // 无论响应状态如何，都处理结果
       const data = await response.json();
-      console.log('令牌验证结果:', { authenticated: data.authenticated, responseOk: response.ok });
 
       if (data.authenticated && data.accessToken && data.refreshToken) {
         // 令牌有效，更新本地令牌
         this.setUserToken(data.accessToken, data.refreshToken);
-        console.log('令牌已更新，验证成功');
         return true;
       } else {
         // 令牌无效，清除本地令牌
         this.clearUserToken();
-        console.log('令牌无效，已清除');
         return false;
       }
     } catch (error) {
       // 网络错误或其他错误，记录错误但不立即清除令牌
-      console.error('验证令牌时出错:', error instanceof Error ? error.message : '未知错误');
-      // 不再自动清除令牌，让上层应用决定如何处理
       return false;
     }
   }
